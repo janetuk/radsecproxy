@@ -6,4 +6,5 @@
 
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-tls
+	dh_auto_configure -- --enable-tls LDFLAGS='-Wl,-L/usr/lib/freeradius -Wl,--rpath=/usr/lib/freeradius'
+
