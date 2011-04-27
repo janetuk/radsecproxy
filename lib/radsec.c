@@ -23,7 +23,7 @@
 #if defined (RS_ENABLE_TLS)
 #include <regex.h>
 #include "rsp_list.h"
-#include "../radsecproxy.h"
+#include "radsecproxy.h"
 #endif
 
 /* Public functions.  */

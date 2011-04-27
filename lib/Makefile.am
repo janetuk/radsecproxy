@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . examples include 
 
-INCLUDES = -I$(srcdir)/include
+INCLUDES = -I$(srcdir)/include -I$(srcdir)/radsecproxy-includes
 AM_CFLAGS = -Wall -g
 
 lib_LTLIBRARIES = libradsec.la
