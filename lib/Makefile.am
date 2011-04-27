@@ -5,7 +5,7 @@ SUBDIRS = radius include . examples
 DIST_SUBDIRS=tests ${SUBDIRS}
 
 
-INCLUDES = -I$(srcdir)/include
+INCLUDES = -I$(srcdir)/include -I$(srcdir)/radsecproxy-includes
 AM_CFLAGS = -Wall -g
 
 lib_LTLIBRARIES = libradsec.la

@@ -39,8 +39,8 @@
 #include "rsp_list.h"
 #include "rsp_hash.h"
 #include "rsp_util.h"
-#include "../hostport_types.h"
-#include "../radsecproxy.h"
+#include "hostport_types.h"
+#include "radsecproxy.h"
 
 static struct hash *tlsconfs = NULL;
 
