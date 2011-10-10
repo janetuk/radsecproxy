@@ -1,7 +1,7 @@
 # -*- Autoconf -*- script for libradsec.
 
-AC_PREREQ([2.65])
-AC_INIT([libradsec], [0.0.2-dev], [linus+libradsec@nordu.net])
+AC_PREREQ([2.63])
+AC_INIT([libradsec], [0.0.2.dev], [linus+libradsec@nordu.net])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([radsec.c])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -42,7 +42,7 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_CHECK_FUNCS([memset socket strdup strerror strrchr])
 
-AC_CONFIG_FILES([Makefile
+AC_CONFIG_FILES([Makefile libradsec.spec
 		 include/Makefile
                  examples/Makefile
                  tests/Makefile])
