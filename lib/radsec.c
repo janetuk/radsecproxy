@@ -64,7 +64,7 @@ rs_context_init_freeradius_dict (struct rs_context *ctx, const char *dict)
   char *fn = NULL;
 
   if (dict == NULL)
-    if (ctx->config != NULL)
+    if (ctx->config != NULL && ctx->config->dictionary)
       dict = ctx->config->dictionary;
 
   if (dict == NULL)
@@ -83,7 +83,8 @@ rs_context_init_freeradius_dict (struct rs_context *ctx, const char *dict)
 
   if (dict_init (dirname (dir), basename (fn)) < 0)
     {
-      r = rs_err_ctx_push_fl (ctx, RSE_FR, __FILE__, __LINE__, "dict_init");
+      r = rs_err_ctx_push_fl (ctx, RSE_FR, __FILE__, __LINE__,
+			      "failing dict_init(\"%s\")", dict);
       goto out;
     }
 
@@ -95,7 +96,7 @@ rs_context_init_freeradius_dict (struct rs_context *ctx, const char *dict)
   return r;
 }
 
-struct rs_error *	   /* FIXME: Return int as all the others?  */
+struct rs_error *
 rs_resolv (struct evutil_addrinfo **addr,
 	   rs_conn_type_t type,
 	   const char *hostname,
@@ -105,7 +106,7 @@ rs_resolv (struct evutil_addrinfo **addr,
   struct evutil_addrinfo hints, *res = NULL;
 
   memset (&hints, 0, sizeof(struct evutil_addrinfo));
-  hints.ai_family = AF_INET;   /* IPv4 only.  TODO: Set AF_UNSPEC.  */
+  hints.ai_family = AF_UNSPEC;
   hints.ai_flags = AI_ADDRCONFIG;
   switch (type)
     {
