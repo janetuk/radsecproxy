@@ -1,13 +1,15 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-DEB_CFLAGS_MAINT_APPEND=-threads
-export DEB_CFLAGS_MAINT_APPEND
+# Directly append until we no longer need oneiric support
+# oneiric doesn't seem to work with this construction
+#DEB_CFLAGS_MAINT_APPEND=-pthread
+#export DEB_CFLAGS_MAINT_APPEND
 
 %:
 	dh $@ 
 
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-tls LDFLAGS='-Wl,-L/usr/lib/freeradius -Wl,--rpath=/usr/lib/freeradius' CFLAGS='$(shell dpkg-buildflags --get CFLAGS)'
+	dh_auto_configure -- --enable-tls LDFLAGS='-Wl,-L/usr/lib/freeradius -Wl,--rpath=/usr/lib/freeradius' CFLAGS='$(shell dpkg-buildflags --get CFLAGS) -pthread'
 
