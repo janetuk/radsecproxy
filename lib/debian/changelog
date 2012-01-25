@@ -1,3 +1,9 @@
+libradsec (0.0.2+20120125-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 25 Jan 2012 11:54:28 -0500
+
 libradsec (0.0.2+20110426-4) unstable; urgency=low
 
   * Work around old oneiric dpkg-buildflags
