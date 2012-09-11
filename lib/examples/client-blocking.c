@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <event2/event.h>
-#include <freeradius/libradius.h>
 #include <radsec/radsec.h>
+#include <radsec/radsec-impl.h>
 #include <radsec/request.h>
 #include "debug.h"		/* For rs_dump_packet().  */
 
@@ -30,8 +30,6 @@ blocking_client (const char *av1, const char *av2, int use_request_object_flag)
   {
     struct rs_peer *server;
 
-    if (rs_context_init_freeradius_dict (h, "/usr/share/freeradius/dictionary"))
-      goto cleanup;
     if (rs_conn_create (h, &conn, NULL))
       goto cleanup;
     rs_conn_set_type (conn, RS_CONN_TYPE_UDP);
@@ -46,8 +44,6 @@ blocking_client (const char *av1, const char *av2, int use_request_object_flag)
   }
 #else  /* defined (USE_CONFIG_FILE) */
   if (rs_context_read_config (h, av1))
-    goto cleanup;
-  if (rs_context_init_freeradius_dict (h, NULL))
     goto cleanup;
   if (rs_conn_create (h, &conn, av2))
     goto cleanup;
@@ -73,10 +69,10 @@ blocking_client (const char *av1, const char *av2, int use_request_object_flag)
   if (resp)
     {
       rs_dump_packet (resp);
-      if (rs_packet_frpkt (resp)->code == PW_AUTHENTICATION_ACK)
+      if (rs_packet_code (resp) == PW_ACCESS_ACCEPT)
 	printf ("Good auth.\n");
       else
-	printf ("Bad auth: %d\n", rs_packet_frpkt (resp)->code);
+	printf ("Bad auth: %d\n", rs_packet_code (resp));
     }
   else
     fprintf (stderr, "%s: no response\n", __func__);
