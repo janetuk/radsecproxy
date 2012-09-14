@@ -547,11 +547,11 @@ blocktype name {
 
       NOTE: All versions of radsecproxy up to and including 1.6
       erroneously verify client certificate chains using the CA in the
-      <strong>first</strong> matching client block regardless of which
-      block is used for the final decision. This changed in 1.6.1 so
-      that a client block with a different <literal>tls</literal>
-      option than the first matching client block is no longer
-      considered for verification of clients.
+      very first matching client block regardless of which block is
+      used for the final decision. This changed in 1.6.1 so that a
+      client block with a different <literal>tls</literal> option than
+      the first matching client block is no longer considered for
+      verification of clients.
 
     </para>
     <para>
