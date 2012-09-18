@@ -1,15 +1,18 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . examples include 
+SUBDIRS = radius include . examples
 DIST_SUBDIRS=tests ${SUBDIRS}
 
 INCLUDES = -I$(srcdir)/include -I$(srcdir)/radsecproxy-includes
+INCLUDES = -I$(srcdir)/include
+
 AM_CFLAGS = -Wall -g
 
 lib_LTLIBRARIES = libradsec.la
 
 libradsec_la_SOURCES = \
+	avp.c \
 	compat.c \
 	conf.c \
 	conn.c \
@@ -50,9 +53,11 @@ libradsec_la_SOURCES += compat.h \
 	rsp_util.h \
 	tcp.h \
 	tls.h \
+	include/radsec/radius.h \
 	udp.h
 
 libradsec_la_LDFLAGS = -version-info 0:0:0 -export-symbols radsec.sym
-libradsec_la_CFLAGS = $(AM_CFLAGS) -Werror # -DDEBUG -DDEBUG_LEVENT 
+libradsec_la_CFLAGS = $(AM_CFLAGS) -I. -I./include -Werror # -DDEBUG -DDEBUG_LEVENT 
 
 EXTRA_DIST = libradsec.spec radsec.sym
+libradsec_la_LIBADD = radius/libradsec-radius.la
