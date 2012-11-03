@@ -80,17 +80,18 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libradsec_la_LIBADD =
-am__libradsec_la_SOURCES_DIST = compat.c conf.c conn.c debug.c err.c \
-	event.c packet.c peer.c radsec.c request.c send.c tcp.c udp.c \
-	rsp_debug.c rsp_hash.c rsp_list.c rsp_util.c tls.c \
+libradsec_la_DEPENDENCIES = radius/libradsec-radius.la
+am__libradsec_la_SOURCES_DIST = avp.c compat.c conf.c conn.c debug.c \
+	err.c event.c packet.c peer.c radsec.c request.c send.c tcp.c \
+	udp.c rsp_debug.c rsp_hash.c rsp_list.c rsp_util.c tls.c \
 	rsp_tlscommon.c compat.h conn.h debug.h err.h event.h packet.h \
 	peer.h rsp_debug.h rsp_hash.h rsp_list.h rsp_tlscommon.h \
-	rsp_util.h tcp.h tls.h udp.h
+	rsp_util.h tcp.h tls.h include/radsec/radius.h udp.h
 @RS_ENABLE_TLS_TRUE@am__objects_1 = libradsec_la-tls.lo \
 @RS_ENABLE_TLS_TRUE@	libradsec_la-rsp_tlscommon.lo
-am_libradsec_la_OBJECTS = libradsec_la-compat.lo libradsec_la-conf.lo \
-	libradsec_la-conn.lo libradsec_la-debug.lo libradsec_la-err.lo \
+am_libradsec_la_OBJECTS = libradsec_la-avp.lo libradsec_la-compat.lo \
+	libradsec_la-conf.lo libradsec_la-conn.lo \
+	libradsec_la-debug.lo libradsec_la-err.lo \
 	libradsec_la-event.lo libradsec_la-packet.lo \
 	libradsec_la-peer.lo libradsec_la-radsec.lo \
 	libradsec_la-request.lo libradsec_la-send.lo \
@@ -280,20 +281,21 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = . examples include 
+SUBDIRS = radius include . examples
 DIST_SUBDIRS = tests ${SUBDIRS}
 INCLUDES = -I$(srcdir)/include -I$(srcdir)/radsecproxy-includes
 AM_CFLAGS = -Wall -g
 lib_LTLIBRARIES = libradsec.la
-libradsec_la_SOURCES = compat.c conf.c conn.c debug.c err.c event.c \
-	packet.c peer.c radsec.c request.c send.c tcp.c udp.c \
+libradsec_la_SOURCES = avp.c compat.c conf.c conn.c debug.c err.c \
+	event.c packet.c peer.c radsec.c request.c send.c tcp.c udp.c \
 	rsp_debug.c rsp_hash.c rsp_list.c rsp_util.c $(am__append_1) \
 	compat.h conn.h debug.h err.h event.h packet.h peer.h \
 	rsp_debug.h rsp_hash.h rsp_list.h rsp_tlscommon.h rsp_util.h \
-	tcp.h tls.h udp.h
+	tcp.h tls.h include/radsec/radius.h udp.h
 libradsec_la_LDFLAGS = -version-info 0:0:0 -export-symbols radsec.sym
-libradsec_la_CFLAGS = $(AM_CFLAGS) -Werror # -DDEBUG -DDEBUG_LEVENT 
+libradsec_la_CFLAGS = $(AM_CFLAGS) -I. -I./include -Werror # -DDEBUG -DDEBUG_LEVENT 
 EXTRA_DIST = libradsec.spec radsec.sym
+libradsec_la_LIBADD = radius/libradsec-radius.la
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -392,6 +394,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libradsec_la-avp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libradsec_la-compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libradsec_la-conf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libradsec_la-conn.Plo@am__quote@
@@ -432,6 +435,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libradsec_la-avp.lo: avp.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libradsec_la_CFLAGS) $(CFLAGS) -MT libradsec_la-avp.lo -MD -MP -MF $(DEPDIR)/libradsec_la-avp.Tpo -c -o libradsec_la-avp.lo `test -f 'avp.c' || echo '$(srcdir)/'`avp.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libradsec_la-avp.Tpo $(DEPDIR)/libradsec_la-avp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='avp.c' object='libradsec_la-avp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libradsec_la_CFLAGS) $(CFLAGS) -c -o libradsec_la-avp.lo `test -f 'avp.c' || echo '$(srcdir)/'`avp.c
 
 libradsec_la-compat.lo: compat.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libradsec_la_CFLAGS) $(CFLAGS) -MT libradsec_la-compat.lo -MD -MP -MF $(DEPDIR)/libradsec_la-compat.Tpo -c -o libradsec_la-compat.lo `test -f 'compat.c' || echo '$(srcdir)/'`compat.c
