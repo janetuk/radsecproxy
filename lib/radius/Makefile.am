@@ -1,6 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
+BUILT_SOURCES = dictionaries.c
+
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)
 AM_CFLAGS = -Wall -g
 
@@ -11,6 +13,7 @@ libradsec_radius_la_SOURCES = \
 	crypto.c \
 	custom.c \
 	dict.c \
+	client.h \
 	id.c \
 	parse.c \
 	print.c \
@@ -27,7 +30,7 @@ DICTIONARIES = \
 	share/dictionary.ukerna \
 	share/dictionary.abfab.ietf
 
-EXTRA_DIST = $(DICTIONARIES)
+EXTRA_DIST = $(DICTIONARIES) convert.pl common.pl header.pl
 
 $(top_srcdir)/include/radsec/radius.h dictionaries.c: ${DICTIONARIES} convert.pl common.pl
 	$(srcdir)/convert.pl ${DICTIONARIES}

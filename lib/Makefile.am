@@ -58,5 +58,5 @@ libradsec_la_SOURCES += compat.h \
 libradsec_la_LDFLAGS = -version-info 0:0:0 -export-symbols radsec.sym
 libradsec_la_CFLAGS = $(AM_CFLAGS) -I. -I./include -Werror # -DDEBUG -DDEBUG_LEVENT 
 
-EXTRA_DIST = libradsec.spec radsec.sym
+EXTRA_DIST = libradsec.spec radsec.sym radsecproxy-includes
 libradsec_la_LIBADD = radius/libradsec-radius.la
