@@ -52,7 +52,6 @@ libradsec_la_SOURCES += compat.h \
 	rsp_util.h \
 	tcp.h \
 	tls.h \
-	include/radsec/radius.h \
 	udp.h
 
 libradsec_la_LDFLAGS = -version-info 0:0:0 -export-symbols radsec.sym
