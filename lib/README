@@ -1,37 +1,49 @@
-libradsec is a RADIUS library for clients doing RADIUS over UDP or
-TLS.  The goal is to add support for writing servers (and thus
-proxies) and to add transports TCP and DTLS.
+Libradsec is a RADIUS library for clients doing RADIUS over UDP or
+TLS. The goal is to add support for writing servers (and thus proxies)
+and to add transports TCP and DTLS.
 
 
 The canonical pickup point is
 http://git.nordu.net/?p=radsecproxy.git;a=shortlog;h=refs/heads/libradsec
 
 
-The source code is licensed under two different licenses, a 3-clause
-BSD license and the GNU General Public License (version 2 or later).
-Users of this library may choose which of these suits them best.
+The source code is licensed under a 3-clause BSD license. See the
+LICENSE file.
 
 
-libradsec depends on 
-- libradius from the FreeRADIUS freeradius-server
-- libevent2
+Libradsec depends on 
 - libconfuse
+- libevent2
 - openssl (if configured with --enable-tls)
 
 
 To compile the library and the examples, do something like
 
- sh autogen.sh && ./configure && make
+  sh autogen.sh && ./configure && make
 
-If any of the libraries are not found, try setting environment
-variable LDFLAGS at configure time like so:
 
- LDFLAGS="-L/usr/lib/freeradius -L/usr/local/lib" ./configure --enable-tls
+There are a couple of options that can be used when configuring. See
+
+  ./configure --help
+
+for the full list. Worth mentioning here is --enable-tls and
+--enable-tls-psk.
+
+If the preprocessor has a hard time finding some of the header files
+are, try setting environment variable CPPFLAGS at configure
+time. Example:
+
+  CPPFLAGS="-I/usr/local/include" ./configure --enable-tls
+
+If the link editor has trouble finding any of the libraries needed,
+try setting environment variable LDFLAGS at configure time. Example:
+
+  LDFLAGS="-L/usr/local/lib" ./configure --enable-tls
 
 
 The parts of the library which has been tested has been so on Linux
-(Ubuntu 10.10) with libfreeradius2 (2.1.9+dfsg-1ubuntu1), libconfuse0
-(2.7-1) and libevent-2.0.10-stable (http://monkey.org/~provos/).
+(Debian) with libconfuse (2.7), libevent (2.0.19) and OpenSSL
+(1.0.1c).
 
 The file HACKING contains more detailed info on the state of the
 various parts of the library.

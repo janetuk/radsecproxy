@@ -1,5 +1,5 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -19,11 +19,11 @@
 #include <radsec/radsec-impl.h>
 #include "err.h"
 #include "debug.h"
-#include "rsp_debug.h"
+#include "radsecproxy/debug.h"
 #if defined (RS_ENABLE_TLS)
 #include <regex.h>
-#include "rsp_list.h"
-#include "radsecproxy.h"
+#include "radsecproxy/list.h"
+#include "radsecproxy/radsecproxy.h"
 #endif
 
 /* Public functions.  */
@@ -49,10 +49,10 @@ rs_context_create (struct rs_context **ctx)
 }
 
 struct rs_error *
-rs_resolv (struct evutil_addrinfo **addr,
-	   rs_conn_type_t type,
-	   const char *hostname,
-	   const char *service)
+rs_resolve (struct evutil_addrinfo **addr,
+            rs_conn_type_t type,
+            const char *hostname,
+            const char *service)
 {
   int err;
   struct evutil_addrinfo hints, *res = NULL;
@@ -102,12 +102,16 @@ rs_context_destroy (struct rs_context *ctx)
 	  for (p = r->peers; p; )
 	    {
 	      struct rs_peer *tmp = p;
-	      if (p->addr)
-		evutil_freeaddrinfo (p->addr);
+	      if (p->addr_cache)
+                {
+                  evutil_freeaddrinfo (p->addr_cache);
+                  p->addr_cache = NULL;
+                }
 	      p = p->next;
 	      rs_free (ctx, tmp);
 	    }
 	  free (r->name);
+          rs_free (ctx, r->transport_cred);
 	  r = r->next;
 	  rs_free (ctx, tmp);
 	}

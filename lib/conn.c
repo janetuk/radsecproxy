@@ -1,5 +1,5 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -20,19 +20,6 @@
 #include "tcp.h"
 
 int
-conn_close (struct rs_connection **connp)
-{
-  int r = 0;
-  assert (connp);
-  assert (*connp);
-  if ((*connp)->is_connected)
-    r = rs_conn_disconnect (*connp);
-  if (r == RSE_OK)
-    *connp = NULL;
-  return r;
-}
-
-int
 conn_user_dispatch_p (const struct rs_connection *conn)
 {
   assert (conn);
@@ -43,6 +30,40 @@ conn_user_dispatch_p (const struct rs_connection *conn)
 	  conn->callbacks.sent_cb);
 }
 
+
+int
+conn_activate_timeout (struct rs_connection *conn)
+{
+  assert (conn);
+  assert (conn->tev);
+  assert (conn->evb);
+  if (conn->timeout.tv_sec || conn->timeout.tv_usec)
+    {
+      rs_debug (("%s: activating timer: %d.%d\n", __func__,
+		 conn->timeout.tv_sec, conn->timeout.tv_usec));
+      if (evtimer_add (conn->tev, &conn->timeout))
+	return rs_err_conn_push_fl (conn, RSE_EVENT, __FILE__, __LINE__,
+				    "evtimer_add: %d", errno);
+    }
+  return RSE_OK;
+}
+
+int
+conn_type_tls (const struct rs_connection *conn)
+{
+  return conn->realm->type == RS_CONN_TYPE_TLS
+    || conn->realm->type == RS_CONN_TYPE_DTLS;
+}
+
+int
+conn_cred_psk (const struct rs_connection *conn)
+{
+  return conn->realm->transport_cred &&
+    conn->realm->transport_cred->type == RS_CRED_TLS_PSK;
+}
+
+
+/* Public functions. */
 int
 rs_conn_create (struct rs_context *ctx,
 		struct rs_connection **conn,
@@ -110,6 +131,25 @@ rs_conn_disconnect (struct rs_connection *conn)
   int err = 0;
 
   assert (conn);
+
+  if (conn->is_connected)
+    event_on_disconnect (conn);
+
+  if (conn->bev)
+    {
+      bufferevent_free (conn->bev);
+      conn->bev = NULL;
+    }
+  if (conn->rev)
+    {
+      event_free (conn->rev);
+      conn->rev = NULL;
+    }
+  if (conn->wev)
+    {
+      event_free (conn->wev);
+      conn->wev = NULL;
+    }
 
   err = evutil_closesocket (conn->fd);
   conn->fd = -1;
@@ -207,7 +247,7 @@ _rcb (struct rs_packet *packet, void *user_data)
   assert (pkt);
   assert (pkt->conn);
 
-  pkt->flags |= rs_packet_received_flag;
+  pkt->flags |= RS_PACKET_RECEIVED;
   if (pkt->conn->bev)
     bufferevent_disable (pkt->conn->bev, EV_WRITE|EV_READ);
   else
@@ -224,7 +264,7 @@ rs_conn_receive_packet (struct rs_connection *conn,
 
   assert (conn);
   assert (conn->realm);
-  assert (!conn_user_dispatch_p (conn)); /* Dispatching mode only.  */
+  assert (!conn_user_dispatch_p (conn)); /* Blocking mode only.  */
 
   if (rs_packet_create (conn, &pkt))
     return -1;
@@ -234,7 +274,7 @@ rs_conn_receive_packet (struct rs_connection *conn,
 
   conn->callbacks.received_cb = _rcb;
   conn->user_data = pkt;
-  pkt->flags &= ~rs_packet_received_flag;
+  pkt->flags &= ~RS_PACKET_RECEIVED;
 
   if (conn->bev)		/* TCP.  */
     {
@@ -254,7 +294,7 @@ rs_conn_receive_packet (struct rs_connection *conn,
 				    "event_add: %s",
 				    evutil_gai_strerror (err));
 
-      /* Activae retransmission timer.  */
+      /* Activate retransmission timer.  */
       conn_activate_timeout (pkt->conn);
     }
 
@@ -267,11 +307,14 @@ rs_conn_receive_packet (struct rs_connection *conn,
 				evutil_gai_strerror (err));
   rs_debug (("%s: event loop done\n", __func__));
 
-  if ((pkt->flags & rs_packet_received_flag) == 0
+  if ((pkt->flags & RS_PACKET_RECEIVED) == 0
       || (req_msg
 	  && packet_verify_response (pkt->conn, pkt, req_msg) != RSE_OK))
     {
-      assert (rs_err_conn_peek_code (pkt->conn));
+      if (rs_err_conn_peek_code (pkt->conn) == RSE_OK)
+        /* No packet and no error on the stack _should_ mean that the
+           server hung up on us.  */
+        rs_err_conn_push (pkt->conn, RSE_DISCO, "no response");
       return rs_err_conn_peek_code (conn);
     }
 
@@ -286,21 +329,4 @@ rs_conn_set_timeout(struct rs_connection *conn, struct timeval *tv)
   assert (conn);
   assert (tv);
   conn->timeout = *tv;
-}
-
-int
-conn_activate_timeout (struct rs_connection *conn)
-{
-  assert (conn);
-  assert (conn->tev);
-  assert (conn->evb);
-  if (conn->timeout.tv_sec || conn->timeout.tv_usec)
-    {
-      rs_debug (("%s: activating timer: %d.%d\n", __func__,
-		 conn->timeout.tv_sec, conn->timeout.tv_usec));
-      if (evtimer_add (conn->tev, &conn->timeout))
-	return rs_err_conn_push_fl (conn, RSE_EVENT, __FILE__, __LINE__,
-				    "evtimer_add: %d", errno);
-    }
-  return RSE_OK;
 }

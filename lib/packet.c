@@ -1,10 +1,11 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <assert.h>
 #include <radius/client.h>
 #include <event2/bufferevent.h>
@@ -92,8 +93,8 @@ packet_do_send (struct rs_packet *pkt)
   {
     char host[80], serv[80];
 
-    getnameinfo (pkt->conn->active_peer->addr->ai_addr,
-		 pkt->conn->active_peer->addr->ai_addrlen,
+    getnameinfo (pkt->conn->active_peer->addr_cache->ai_addr,
+		 pkt->conn->active_peer->addr_cache->ai_addrlen,
 		 host, sizeof(host), serv, sizeof(serv),
 		 0 /* NI_NUMERICHOST|NI_NUMERICSERV*/);
     rs_debug (("%s: about to send this to %s:%s:\n", __func__, host, serv));
@@ -137,16 +138,6 @@ rs_packet_create (struct rs_connection *conn, struct rs_packet **pkt_out)
   if (rpkt == NULL)
     return rs_err_conn_push (conn, RSE_NOMEM, __func__);
 
-  /*
-   * This doesn't make sense; the packet identifier is constant for
-   * an entire conversation. A separate API should be provided to
-   * allow the application to set the packet ID, or a conversation
-   * object should group related packets together.
-   */
-#if 0
-  rpkt->id = conn->nextid++
-#endif
-
   err = nr_packet_init (rpkt, NULL, NULL,
 		        PW_ACCESS_REQUEST,
 		        rpkt + 1, RS_MAX_PACKET_LEN);
@@ -182,14 +173,16 @@ rs_packet_create_authn_request (struct rs_connection *conn,
 
   if (user_name)
     {
-      err = rs_packet_append_avp (pkt, PW_USER_NAME, 0, user_name, 0);
+      err = rs_packet_add_avp (pkt, PW_USER_NAME, 0, user_name,
+                               strlen (user_name));
       if (err)
 	return err;
     }
 
   if (user_pw)
     {
-      err = rs_packet_append_avp (pkt, PW_USER_PASSWORD, 0, user_pw, 0);
+      err = rs_packet_add_avp (pkt, PW_USER_PASSWORD, 0, user_pw,
+                               strlen (user_pw));
       if (err)
 	return err;
     }
@@ -210,7 +203,46 @@ rs_packet_destroy (struct rs_packet *pkt)
 }
 
 int
-rs_packet_append_avp (struct rs_packet *pkt, 
+rs_packet_add_avp (struct rs_packet *pkt,
+                   unsigned int attr, unsigned int vendor,
+                   const void *data, size_t data_len)
+
+{
+  const DICT_ATTR *da;
+  VALUE_PAIR *vp;
+  int err;
+
+  assert (pkt);
+  assert (pkt->conn);
+  assert (pkt->conn->ctx);
+
+  da = nr_dict_attr_byvalue (attr, vendor);
+  if (da == NULL)
+    return rs_err_conn_push (pkt->conn, RSE_ATTR_TYPE_UNKNOWN,
+                             "nr_dict_attr_byvalue");
+  vp = rs_malloc (pkt->conn->ctx, sizeof(*vp));
+  if (vp == NULL)
+    return rs_err_conn_push (pkt->conn, RSE_NOMEM, NULL);
+  if (nr_vp_init (vp, da) == NULL)
+    {
+      nr_vp_free (&vp);
+      return rs_err_conn_push (pkt->conn, RSE_INTERNAL, NULL);
+    }
+  err = nr_vp_set_data (vp, data, data_len);
+  if (err < 0)
+    {
+      nr_vp_free (&vp);
+      return rs_err_conn_push (pkt->conn, -err, "nr_vp_set_data");
+    }
+  nr_vps_append (&pkt->rpkt->vps, vp);
+
+  return RSE_OK;
+}
+
+/* TODO: Rename rs_packet_append_avp, indicating that encoding is
+   being done. */
+int
+rs_packet_append_avp (struct rs_packet *pkt,
                       unsigned int attr, unsigned int vendor,
                       const void *data, size_t data_len)
 {
@@ -221,7 +253,7 @@ rs_packet_append_avp (struct rs_packet *pkt,
 
   da = nr_dict_attr_byvalue (attr, vendor);
   if (da == NULL)
-    return RSE_ATTR_TYPE_UNKNOWN;
+    return rs_err_conn_push (pkt->conn, RSE_ATTR_TYPE_UNKNOWN, __func__);
 
   err = nr_packet_attr_append (pkt->rpkt, NULL, da, data, data_len);
   if (err < 0)

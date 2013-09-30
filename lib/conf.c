@@ -1,5 +1,5 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -8,16 +8,18 @@
 #include <confuse.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <radsec/radsec.h>
 #include <radsec/radsec-impl.h>
 #include "peer.h"
+#include "util.h"
 #include "debug.h"
 
 #if 0
   # common config options
 
   # common realm config options
-  realm NAME {
+  realm STRING {
       type = "UDP"|"TCP"|"TLS"|"DTLS"
       timeout = INT
       retries = INT
@@ -25,19 +27,23 @@
       #cacertpath = STRING
       certfile = STRING
       certkeyfile = STRING
+      pskstr = STRING	# Transport pre-shared key, UTF-8 form.
+      pskhexstr = STRING # Transport pre-shared key, ASCII hex form.
+      pskid = STRING
+      pskex = "PSK"|"DHE_PSK"|"RSA_PSK"
   }
 
   # client specific realm config options
-  realm NAME {
+  realm STRING {
       server {
           hostname = STRING
 	  service = STRING
-	  secret = STRING
+          secret = STRING       # RADIUS secret
       }
   }
 #endif
 
-/* FIXME: Leaking memory in error cases?  */
+/* FIXME: Leaking memory in error cases.  */
 int
 rs_context_read_config(struct rs_context *ctx, const char *config_file)
 {
@@ -63,6 +69,10 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
       /*CFG_STR ("cacertpath", NULL, CFGF_NONE),*/
       CFG_STR ("certfile", NULL, CFGF_NONE),
       CFG_STR ("certkeyfile", NULL, CFGF_NONE),
+      CFG_STR ("pskstr", NULL, CFGF_NONE),
+      CFG_STR ("pskhexstr", NULL, CFGF_NONE),
+      CFG_STR ("pskid", NULL, CFGF_NONE),
+      CFG_STR ("pskex", "PSK", CFGF_NONE),
       CFG_SEC ("server", server_opts, CFGF_MULTI),
       CFG_END ()
     };
@@ -101,6 +111,7 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
     {
       struct rs_realm *r = NULL;
       const char *typestr;
+      char *pskstr = NULL, *pskhexstr = NULL;
 
       r = rs_calloc (ctx, 1, sizeof(*r));
       if (r == NULL)
@@ -115,14 +126,14 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
 	  config->realms = r;
 	}
       cfg_realm = cfg_getnsec (cfg, "realm", i);
-      /* We use a copy of the return value of cfg_title() since it's const.  */
       s = cfg_title (cfg_realm);
       if (s == NULL)
 	return rs_err_ctx_push_fl (ctx, RSE_CONFIG, __FILE__, __LINE__,
 				   "missing realm name");
-      r->name = strdup (s);
+      /* We use a copy of the return value of cfg_title() since it's const.  */
+      r->name = rs_strdup (ctx, s);
       if (r->name == NULL)
-	return rs_err_ctx_push_fl (ctx, RSE_NOMEM, __FILE__, __LINE__, NULL);
+	return RSE_NOMEM;
 
       typestr = cfg_getstr (cfg_realm, "type");
       if (strcmp (typestr, "UDP") == 0)
@@ -134,8 +145,9 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
       else if (strcmp (typestr, "DTLS") == 0)
 	r->type = RS_CONN_TYPE_DTLS;
       else
-	return rs_err_ctx_push_fl (ctx, RSE_CONFIG, __FILE__, __LINE__,
-				   "invalid connection type: %s", typestr);
+	return rs_err_ctx_push (ctx, RSE_CONFIG,
+                                "%s: invalid connection type: %s",
+                                r->name, typestr);
       r->timeout = cfg_getint (cfg_realm, "timeout");
       r->retries = cfg_getint (cfg_realm, "retries");
 
@@ -143,6 +155,65 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
       /*r->cacertpath = cfg_getstr (cfg_realm, "cacertpath");*/
       r->certfile = cfg_getstr (cfg_realm, "certfile");
       r->certkeyfile = cfg_getstr (cfg_realm, "certkeyfile");
+
+      pskstr = cfg_getstr (cfg_realm, "pskstr");
+      pskhexstr = cfg_getstr (cfg_realm, "pskhexstr");
+      if (pskstr || pskhexstr)
+        {
+#if defined RS_ENABLE_TLS_PSK
+          char *kex = cfg_getstr (cfg_realm, "pskex");
+          rs_cred_type_t type = RS_CRED_NONE;
+          struct rs_credentials *cred = NULL;
+          assert (kex != NULL);
+
+          if (!strcmp (kex, "PSK"))
+            type = RS_CRED_TLS_PSK;
+          else
+            {
+              /* TODO: push a warning on the error stack:*/
+              /*rs_err_ctx_push (ctx, RSE_WARN, "%s: unsupported PSK key exchange"
+                               " algorithm -- PSK not used", kex);*/
+            }
+
+          if (type != RS_CRED_NONE)
+            {
+              cred = rs_calloc (ctx, 1, sizeof (*cred));
+              if (cred == NULL)
+                return rs_err_ctx_push_fl (ctx, RSE_NOMEM, __FILE__, __LINE__,
+                                           NULL);
+              cred->type = type;
+              cred->identity = cfg_getstr (cfg_realm, "pskid");
+              if (pskhexstr)
+                {
+                  cred->secret_encoding = RS_KEY_ENCODING_ASCII_HEX;
+                  cred->secret = pskhexstr;
+                  if (pskstr)
+                    ;      /* TODO: warn that we're ignoring pskstr */
+                }
+              else
+                {
+                  cred->secret_encoding = RS_KEY_ENCODING_UTF8;
+                  cred->secret = pskstr;
+                }
+
+              r->transport_cred = cred;
+            }
+#else  /* !RS_ENABLE_TLS_PSK */
+          /* TODO: push a warning on the error stack: */
+          /* rs_err_ctx_push (ctx, RSE_WARN, "libradsec wasn't configured with "
+                           "support for TLS preshared keys, ignoring pskstr "
+                           "and pskhexstr");*/
+#endif  /* RS_ENABLE_TLS_PSK */
+        }
+
+      /* For TLS and DTLS realms, validate that we either have (i) CA
+         cert file or path or (ii) PSK.  */
+      if ((r->type == RS_CONN_TYPE_TLS || r->type == RS_CONN_TYPE_DTLS)
+          && (r->cacertfile == NULL && r->cacertpath == NULL)
+          && r->transport_cred == NULL)
+        return rs_err_ctx_push (ctx, RSE_CONFIG,
+                                "%s: missing both CA file/path and PSK",
+                                r->name);
 
       /* Add peers, one per server stanza.  */
       for (j = 0; j < cfg_size (cfg_realm, "server"); j++)
@@ -154,10 +225,8 @@ rs_context_read_config(struct rs_context *ctx, const char *config_file)
 	  p->realm = r;
 
 	  cfg_server = cfg_getnsec (cfg_realm, "server", j);
-	  /* FIXME: Handle resolve errors, possibly by postponing name
-	     resolution.  */
-	  rs_resolv (&p->addr, r->type, cfg_getstr (cfg_server, "hostname"),
-		     cfg_getstr (cfg_server, "service"));
+	  p->hostname = cfg_getstr (cfg_server, "hostname");
+          p->service = cfg_getstr (cfg_server, "service");
 	  p->secret = cfg_getstr (cfg_server, "secret");
 	}
     }
@@ -172,9 +241,11 @@ struct rs_realm *
 rs_conf_find_realm(struct rs_context *ctx, const char *name)
 {
   struct rs_realm *r;
+  assert (ctx);
 
-  for (r = ctx->config->realms; r; r = r->next)
-    if (strcmp (r->name, name) == 0)
+  if (ctx->config)
+    for (r = ctx->config->realms; r; r = r->next)
+      if (strcmp (r->name, name) == 0)
 	return r;
 
   return NULL;
