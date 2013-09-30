@@ -1,5 +1,5 @@
-/* Copyright 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2011-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -22,6 +22,8 @@
 #if defined (RS_ENABLE_TLS)
 #include "tls.h"
 #endif
+#include "err.h"
+#include "radsec.h"
 #include "event.h"
 #include "packet.h"
 #include "conn.h"
@@ -100,9 +102,16 @@ event_init_socket (struct rs_connection *conn, struct rs_peer *p)
   if (conn->fd != -1)
     return RSE_OK;
 
-  assert (p->addr);
-  conn->fd = socket (p->addr->ai_family, p->addr->ai_socktype,
-		     p->addr->ai_protocol);
+  if (p->addr_cache == NULL)
+    {
+      struct rs_error *err =
+        rs_resolve (&p->addr_cache, p->realm->type, p->hostname, p->service);
+      if (err != NULL)
+        return err_conn_push_err (conn, err);
+    }
+
+  conn->fd = socket (p->addr_cache->ai_family, p->addr_cache->ai_socktype,
+		     p->addr_cache->ai_protocol);
   if (conn->fd < 0)
     return rs_err_conn_push_fl (conn, RSE_SOCKERR, __FILE__, __LINE__,
 				"socket: %d (%s)",
@@ -171,8 +180,8 @@ event_do_connect (struct rs_connection *conn)
   {
     char host[80], serv[80];
 
-    getnameinfo (p->addr->ai_addr,
-		 p->addr->ai_addrlen,
+    getnameinfo (p->addr_cache->ai_addr,
+		 p->addr_cache->ai_addrlen,
 		 host, sizeof(host), serv, sizeof(serv),
 		 0 /* NI_NUMERICHOST|NI_NUMERICSERV*/);
     rs_debug (("%s: connecting to %s:%s\n", __func__, host, serv));
@@ -182,8 +191,8 @@ event_do_connect (struct rs_connection *conn)
   if (p->conn->bev)		/* TCP */
     {
       conn_activate_timeout (conn); /* Connect timeout.  */
-      err = bufferevent_socket_connect (p->conn->bev, p->addr->ai_addr,
-					p->addr->ai_addrlen);
+      err = bufferevent_socket_connect (p->conn->bev, p->addr_cache->ai_addr,
+					p->addr_cache->ai_addrlen);
       if (err < 0)
 	rs_err_conn_push_fl (p->conn, RSE_EVENT, __FILE__, __LINE__,
 			     "bufferevent_socket_connect: %s",
@@ -193,7 +202,9 @@ event_do_connect (struct rs_connection *conn)
     }
   else				/* UDP */
     {
-      err = connect (p->conn->fd, p->addr->ai_addr, p->addr->ai_addrlen);
+      err = connect (p->conn->fd,
+                     p->addr_cache->ai_addr,
+                     p->addr_cache->ai_addrlen);
       if (err < 0)
 	{
 	  sockerr = evutil_socket_geterror (p->conn->fd);
@@ -211,9 +222,7 @@ event_loopbreak (struct rs_connection *conn)
 {
   int err = event_base_loopbreak (conn->evb);
   if (err < 0)
-    rs_err_conn_push_fl (conn, RSE_EVENT, __FILE__, __LINE__,
-			 "event_base_loopbreak: %s",
-			 evutil_gai_strerror (err));
+    rs_err_conn_push (conn, RSE_EVENT, "event_base_loopbreak");
   return err;
 }
 
@@ -228,10 +237,21 @@ event_on_disconnect (struct rs_connection *conn)
     conn->callbacks.disconnected_cb (conn->user_data);
 }
 
-void
+/** Internal connect event returning 0 on success or -1 on error.  */
+int
 event_on_connect (struct rs_connection *conn, struct rs_packet *pkt)
 {
   assert (!conn->is_connecting);
+
+#if defined (RS_ENABLE_TLS)
+  if (conn_type_tls(conn) && !conn_cred_psk(conn))
+    if (tls_verify_cert (conn) != RSE_OK)
+      {
+        rs_debug (("%s: server cert verification failed\n", __func__));
+        return -1;
+      }
+#endif	/* RS_ENABLE_TLS */
+
   conn->is_connected = 1;
   rs_debug (("%s: %p connected\n", __func__, conn->active_peer));
 
@@ -240,6 +260,8 @@ event_on_connect (struct rs_connection *conn, struct rs_packet *pkt)
 
   if (pkt)
     packet_do_send (pkt);
+
+  return 0;
 }
 
 int

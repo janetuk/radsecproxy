@@ -1,13 +1,11 @@
-/* RADIUS client doing blocking i/o.  */
+/* RADIUS/RadSec client using libradsec in blocking mode. */
 
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <event2/event.h>
+#include <assert.h>
 #include <radsec/radsec.h>
-#include <radsec/radsec-impl.h>
 #include <radsec/request.h>
+#include "err.h"
 #include "debug.h"		/* For rs_dump_packet().  */
 
 #define SECRET "sikrit"
@@ -15,16 +13,22 @@
 #define USER_PW "password"
 
 struct rs_error *
-blocking_client (const char *av1, const char *av2, int use_request_object_flag)
+blocking_client (const char *config_fn, const char *configuration,
+                 int use_request_object_flag)
 {
   struct rs_context *h = NULL;
   struct rs_connection *conn = NULL;
   struct rs_request *request = NULL;
   struct rs_packet *req = NULL, *resp = NULL;
   struct rs_error *err = NULL;
+  int r;
 
-  if (rs_context_create (&h))
-    return NULL;
+  r = rs_context_create (&h);
+  if (r)
+    {
+      assert(r == RSE_NOMEM);
+      assert (!"out of RAM -- unable to create libradsec context");
+    }
 
 #if !defined (USE_CONFIG_FILE)
   {
@@ -43,9 +47,9 @@ blocking_client (const char *av1, const char *av2, int use_request_object_flag)
       goto cleanup;
   }
 #else  /* defined (USE_CONFIG_FILE) */
-  if (rs_context_read_config (h, av1))
+  if (rs_context_read_config (h, config_fn))
     goto cleanup;
-  if (rs_conn_create (h, &conn, av2))
+  if (rs_conn_create (h, &conn, configuration))
     goto cleanup;
 #endif	/* defined (USE_CONFIG_FILE) */
 
@@ -93,6 +97,13 @@ blocking_client (const char *av1, const char *av2, int use_request_object_flag)
   return err;
 }
 
+void
+usage (int argc, char *argv[])
+{
+  fprintf (stderr, "usage: %s: [-r] config-file config-name\n", argv[0]);
+  exit (1);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -105,10 +116,12 @@ main (int argc, char *argv[])
       argc--;
       argv++;
     }
+  if (argc < 3)
+    usage (argc, argv);
   err = blocking_client (argv[1], argv[2], use_request_object_flag);
   if (err)
     {
-      fprintf (stderr, "%s\n", rs_err_msg (err));
+      fprintf (stderr, "error: %s: %d\n", rs_err_msg (err), rs_err_code (err, 0));
       return rs_err_code (err, 1);
     }
   return 0;

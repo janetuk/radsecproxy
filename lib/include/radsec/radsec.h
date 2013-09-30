@@ -1,7 +1,8 @@
 /** \file radsec.h
     \brief Public interface for libradsec.  */
 
-/* See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #ifndef _RADSEC_RADSEC_H_
 #define _RADSEC_RADSEC_H_ 1
@@ -29,7 +30,6 @@ enum rs_error_code {
     RSE_INVALID_CTX = 3,
     RSE_INVALID_CONN = 4,
     RSE_CONN_TYPE_MISMATCH = 5,
-    RSE_FR = 6,
     RSE_BADADDR = 7,
     RSE_NOPEER = 8,
     RSE_EVENT = 9,		/* libevent error.  */
@@ -42,7 +42,7 @@ enum rs_error_code {
     RSE_TIMEOUT_CONN = 16,	/* Connection timeout.  */
     RSE_INVAL = 17,		/* Invalid argument.  */
     RSE_TIMEOUT_IO = 18,	/* I/O timeout.  */
-    RSE_TIMEOUT= 19,		/* High level timeout.  */
+    RSE_TIMEOUT = 19,		/* High level timeout.  */
     RSE_DISCO = 20,
     RSE_INUSE = 21,
     RSE_PACKET_TOO_SMALL = 22,
@@ -66,7 +66,9 @@ enum rs_error_code {
     RSE_INVALID_RESPONSE_SRC = 40,
     RSE_NO_PACKET_DATA = 41,
     RSE_VENDOR_UNKNOWN = 42,
-    RSE_MAX = RSE_VENDOR_UNKNOWN
+    RSE_CRED = 43,
+    RSE_CERT = 44,
+    RSE_MAX = RSE_CERT
 };
 
 enum rs_conn_type {
@@ -294,16 +296,21 @@ int rs_packet_create(struct rs_connection *conn, struct rs_packet **pkt_out);
 /** Free all memory allocated for packet \a pkt.  */
 void rs_packet_destroy(struct rs_packet *pkt);
 
-/** Send packet \a pkt on the connection associated with \a pkt.  \a
-    user_data is sent to the \a rs_conn_packet_received_cb callback
-    registered with the connection.  If no callback is registered with
+/** Send packet \a pkt on the connection associated with \a pkt.
+    \a user_data is passed to the \a rs_conn_packet_received_cb callback
+    registered with the connection. If no callback is registered with
     the connection, the event loop is run by \a rs_packet_send and it
-    blocks until the packet has been succesfully sent.
+    blocks until the full packet has been sent. Note that sending can
+    fail in several ways, f.ex. if the transmission protocol in use
+    is connection oriented (\a RS_CONN_TYPE_TCP and \a RS_CONN_TYPE_TLS)
+    and the connection can not be established. Also note that no
+    retransmission is done, something that is required for connectionless
+    transport protocols (\a RS_CONN_TYPE_UDP and \a RS_CONN_TYPE_DTLS).
+    The "request" API with \a rs_request_send can help with this.
 
-    \return On success, RSE_OK (0) is returned.  On error, !0 is
+    \return On success, RSE_OK (0) is returned. On error, !0 is
     returned and a struct \a rs_error is pushed on the error stack for
-    the connection.  The error can be accessed using \a
-    rs_err_conn_pop.  */
+    the connection. The error can be accessed using \a rs_err_conn_pop. */
 int rs_packet_send(struct rs_packet *pkt, void *user_data);
 
 /** Create a RADIUS authentication request packet associated with
@@ -315,7 +322,17 @@ int rs_packet_create_authn_request(struct rs_connection *conn,
 				   const char *user_name,
 				   const char *user_pw);
 
-/*** Append \a tail to packet \a pkt.  */
+/** Add a new attribute-value pair to \a pkt. */
+int rs_packet_add_avp(struct rs_packet *pkt,
+                      unsigned int attr, unsigned int vendor,
+                      const void *data, size_t data_len);
+
+/** Append a new attribute to packet \a pkt. Note that this function
+    encodes the attribute and therefore might require the secret
+    shared with the thought recipient to be set in pkt->rpkt. Note
+    also that this function marks \a pkt as already encoded and can
+    not be used on packets with non-encoded value-pairs already
+    added. */
 int
 rs_packet_append_avp(struct rs_packet *pkt,
 		     unsigned int attribute, unsigned int vendor,

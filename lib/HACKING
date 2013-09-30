@@ -1,9 +1,8 @@
 HACKING file for libradsec (in Emacs -*- org -*- mode).
 
-Status as of libradsec-0.0.2.dev (2011-03-24).
+Status as of libradsec-0.0.4.dev (2013-05-06).
 
 * Build instructions
-cd libradsec/lib
 sh autogen.sh
 ./configure #--enable-tls
 make
@@ -11,51 +10,82 @@ make
 examples/client -r examples/client.conf blocking-tls; echo $?
 
 * Design of the API
-- There are three usage modes
-  - Application use the send and receive calls (blocking mode)
-  - Application registers callbacks and runs the libevent dispatch
-    loop (a.k.a. user dispatch mode)
+- There are three usage modes:
+
+  - Application uses blocking send and receive calls (blocking
+    mode). This is typically fine for a simple client.
+
+  - Application registers callbacks with libradsec and runs the
+    libevent dispatch loop (a.k.a. user dispatch mode). This would
+    probably how to implement a server or a proxy.
+
   - Application runs its own event loop, using fd's for select and
-    performs I/O using the libradsec send/receive calls
-    (a.k.a. on-your-own mode)
-- User chooses allocation regime
+    performs I/O using libradsec send/receive functions
+    (a.k.a. on-your-own mode). Might be useful for an application
+    which already has an event loop that wants to add RadSec
+    functionality.
+
+- Apart from configuration and error handling, an application
+  shouldn't need to handle TCP and UDP connections
+  differently. Similarly, the use of TLS/DTLS or not shouldn't
+  influence the libradsec calls made by the application.
+
+- Configuration is done either by using the API or by pointing at a
+  configuration file which is parsed by libradsec.
+
+- Fully reentrant.
+
+- Application chooses allocation regime.
+
+Note that as of 0.0.2.dev libradsec suffers from way too much focus on
+the behaviour of a blocking client and is totally useless as a server.
+Not only does it lack most of the functions needed for writing a
+server but it also contains at least one architectural mishap which
+kills the server idea -- a connection timeout (TCP) or a retransmit
+timeout (UDP) will result in the event loop being broken. The same
+thing will happen if there's an error on a TCP connection, f.ex. a
+failing certificate validation (TLS).
 
 * Dependencies
-Details apply to Ubuntu 10.10.
+Details (within parentheses) apply to Debian Wheezy.
 
-- libconfuse (2.7-1)
+- libconfuse (2.7-4)
   sudo apt-get install libconfuse-dev libconfuse0
-- libevent from source (release-2.0.10-stable)
-  git clone --branch release-2.0.10-stable git://levent.git.sourceforge.net/gitroot/levent/levent
-  cd levent; sh autogen.sh && ./configure --enable-openssl
-  make && sudo make install
-- OpenSSL (optional, for TLS and DTLS support)
-  sudo apt-get install libssl-dev
+- libevent2 (2.0.19-stable-3)
+  sudo apt-get install libevent-dev libevent-2.0-5
+- OpenSSL (1.0.1c-4) -- optional, for TLS and DTLS support
+  sudo apt-get install libssl-dev libssl1.0.0
   
-* Functionality and quality
+* Functionality and quality in 0.0.x
 ** Not well tested
 - reading config file
 - [TCP] short read
 - [TCP] short write
 - [TLS] basic tls support
+- [TLS] preshared key support
+- [TLS] verification of CN
+
 ** Known issues
 - error stack is only one entry deep
 - custom allocation scheme is not used in all places
+
 ** Not implemented
-- server failover
-- [TLS] verification of CN
-- [TLS] preshared key support
+- dispatch mode (planned for 0.1)
+- [client] server failover / RFC3539 watchdog (planned for 0.1)
+- [server] support (planned for 0.2)
+- [client] TCP keepalive
+- on-your-own mode
 - [DTLS] support
 
 * Found a bug?
-Please report it.  This is how we improve the quality of the code.
+Please report it. That is how we improve the quality of the code.
 
 If possible, please build the library with DEBUG defined (CFLAGS="-g
--DDEBUG") and reproduce the problem.  With DEBUG defined, lots of
+-DDEBUG") and reproduce the problem. With DEBUG defined, lots of
 asserts are enabled which might give a hint about what's gone wrong.
 
-Running the library under gdb is another good idea.  If you experience
-a crash, catching it in gdb and providing a backtrace is highly
+Running the library under gdb is another good idea. If you experience
+a crash, catching the crash in gdb and providing a backtrace is highly
 valuable for debugging.
 
 Contact: mailto:linus+libradsec@nordu.net

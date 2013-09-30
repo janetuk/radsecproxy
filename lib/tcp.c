@@ -1,5 +1,5 @@
-/* Copyright 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2011-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -25,8 +25,7 @@
 #include <event2/buffer.h>
 #endif
 
-/* Read one RADIUS packet header.  Return !0 on error.  A return value
-   of 0 means that we need more data.  */
+/** Read one RADIUS packet header. Return !0 on error. */
 static int
 _read_header (struct rs_packet *pkt)
 {
@@ -35,11 +34,13 @@ _read_header (struct rs_packet *pkt)
   n = bufferevent_read (pkt->conn->bev, pkt->hdr, RS_HEADER_LEN);
   if (n == RS_HEADER_LEN)
     {
-      pkt->flags |= rs_packet_hdr_read_flag;
+      pkt->flags |= RS_PACKET_HEADER_READ;
       pkt->rpkt->length = (pkt->hdr[2] << 8) + pkt->hdr[3];
       if (pkt->rpkt->length < 20 || pkt->rpkt->length > RS_MAX_PACKET_LEN)
 	{
-	  conn_close (&pkt->conn);
+          rs_debug (("%s: invalid packet length: %d\n",
+                     __func__, pkt->rpkt->length));
+          rs_conn_disconnect (pkt->conn);
 	  return rs_err_conn_push (pkt->conn, RSE_INVALID_PKT,
 				   "invalid packet length: %d",
 				   pkt->rpkt->length);
@@ -56,7 +57,8 @@ _read_header (struct rs_packet *pkt)
     }
   else	    /* Error: libevent gave us less than the low watermark. */
     {
-      conn_close (&pkt->conn);
+      rs_debug (("%s: got: %d octets reading header\n", __func__, n));
+      rs_conn_disconnect (pkt->conn);
       return rs_err_conn_push_fl (pkt->conn, RSE_INTERNAL, __FILE__, __LINE__,
 				  "got %d octets reading header", n);
     }
@@ -64,6 +66,13 @@ _read_header (struct rs_packet *pkt)
   return 0;
 }
 
+/** Read a message, check that it's valid RADIUS and hand it off to
+    registered user callback.
+
+    The packet is read from the bufferevent associated with \a pkt and
+    the data is stored in \a pkt->rpkt.
+
+    Return 0 on success and !0 on failure. */
 static int
 _read_packet (struct rs_packet *pkt)
 {
@@ -83,7 +92,7 @@ _read_packet (struct rs_packet *pkt)
     {
       bufferevent_disable (pkt->conn->bev, EV_READ);
       rs_debug (("%s: complete packet read\n", __func__));
-      pkt->flags &= ~rs_packet_hdr_read_flag;
+      pkt->flags &= ~RS_PACKET_HEADER_READ;
       memset (pkt->hdr, 0, sizeof(*pkt->hdr));
 
       /* Checks done by rad_packet_ok:
@@ -94,8 +103,9 @@ _read_packet (struct rs_packet *pkt)
       err = nr_packet_ok (pkt->rpkt);
       if (err != RSE_OK)
 	{
-	  conn_close (&pkt->conn);
-	  return rs_err_conn_push_fl (pkt->conn, err, __FILE__, __LINE__,
+          rs_debug (("%s: %d: invalid packet\n", __func__, -err));
+          rs_conn_disconnect (pkt->conn);
+	  return rs_err_conn_push_fl (pkt->conn, -err, __FILE__, __LINE__,
 				      "invalid packet");
 	}
 
@@ -141,9 +151,15 @@ tcp_read_cb (struct bufferevent *bev, void *user_data)
   assert (pkt->rpkt);
 
   pkt->rpkt->sockfd = pkt->conn->fd;
-  pkt->rpkt->vps = NULL;
+  pkt->rpkt->vps = NULL;        /* FIXME: can this be done when initializing pkt? */
 
-  if ((pkt->flags & rs_packet_hdr_read_flag) == 0)
+  /* Read a message header if not already read, return if that
+     fails. Read a message and have it dispatched to the user
+     registered callback.
+
+     Room for improvement: Peek inside buffer (evbuffer_copyout()) to
+     avoid the extra copying. */
+  if ((pkt->flags & RS_PACKET_HEADER_READ) == 0)
     if (_read_header (pkt))
       return;			/* Error.  */
   _read_packet (pkt);
@@ -158,18 +174,28 @@ tcp_event_cb (struct bufferevent *bev, short events, void *user_data)
 #if defined (RS_ENABLE_TLS)
   unsigned long tlserr = 0;
 #endif
+#if defined (DEBUG)
+  struct rs_peer *p = NULL;
+#endif
 
   assert (pkt);
   assert (pkt->conn);
-  assert (pkt->conn->active_peer);
   conn = pkt->conn;
+#if defined (DEBUG)
+  assert (pkt->conn->active_peer);
+  p = conn->active_peer;
+#endif
 
   conn->is_connecting = 0;
   if (events & BEV_EVENT_CONNECTED)
     {
       if (conn->tev)
 	evtimer_del (conn->tev); /* Cancel connect timer.  */
-      event_on_connect (conn, pkt);
+      if (event_on_connect (conn, pkt))
+        {
+          event_on_disconnect (conn);
+          event_loopbreak (conn);
+        }
     }
   else if (events & BEV_EVENT_EOF)
     {
@@ -179,7 +205,7 @@ tcp_event_cb (struct bufferevent *bev, short events, void *user_data)
     {
       rs_debug (("%s: %p times out on %s\n", __func__, p,
 		 (events & BEV_EVENT_READING) ? "read" : "write"));
-      rs_err_conn_push_fl (pkt->conn, RSE_TIMEOUT_IO, __FILE__, __LINE__, NULL);
+      rs_err_conn_push_fl (conn, RSE_TIMEOUT_IO, __FILE__, __LINE__, NULL);
     }
   else if (events & BEV_EVENT_ERROR)
     {
@@ -187,13 +213,13 @@ tcp_event_cb (struct bufferevent *bev, short events, void *user_data)
       if (sockerr == 0)	/* FIXME: True that errno == 0 means closed? */
 	{
 	  event_on_disconnect (conn);
-	  rs_err_conn_push_fl (pkt->conn, RSE_DISCO, __FILE__, __LINE__, NULL);
+	  rs_err_conn_push_fl (conn, RSE_DISCO, __FILE__, __LINE__, NULL);
 	}
       else
 	{
 	  rs_debug (("%s: %d: %d (%s)\n", __func__, conn->fd, sockerr,
 		     evutil_socket_error_to_string (sockerr)));
-	  rs_err_conn_push_fl (pkt->conn, RSE_SOCKERR, __FILE__, __LINE__,
+	  rs_err_conn_push_fl (conn, RSE_SOCKERR, __FILE__, __LINE__,
 			       "%d: %d (%s)", conn->fd, sockerr,
 			       evutil_socket_error_to_string (sockerr));
 	}
@@ -206,7 +232,7 @@ tcp_event_cb (struct bufferevent *bev, short events, void *user_data)
 	    {
 	      rs_debug (("%s: openssl error: %s\n", __func__,
 			 ERR_error_string (tlserr, NULL)));
-	      rs_err_conn_push_fl (pkt->conn, RSE_SSLERR, __FILE__, __LINE__,
+	      rs_err_conn_push_fl (conn, RSE_SSLERR, __FILE__, __LINE__,
 				   ERR_error_string (tlserr, NULL));
 	    }
 	}

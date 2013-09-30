@@ -1,10 +1,12 @@
 AUTOMAKE_OPTIONS = foreign
-INCLUDES = -I$(top_srcdir)/include
-AM_CFLAGS = -Wall -g
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)
+AM_CFLAGS = -Wall -Werror -g
 
-bin_PROGRAMS = test-udp udp-server
+TESTS = test-udp
 
-test_udp_SOURCES = test-udp.c udp.c
-test_udp_LDADD = ../libradsec.la -lcgreen -lm
+check_PROGRAMS = test-udp udp-server
 
-udp_server_SOURCES = udp-server.c udp.c
+test_udp_SOURCES = test-udp.c udp.c udp.h
+test_udp_LDADD = ../libradsec.la -lcunit -lm
+
+udp_server_SOURCES = udp-server.c udp.c udp.h

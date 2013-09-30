@@ -1,7 +1,8 @@
 /** @file libradsec-impl.h
     @brief Libraray internal header file for libradsec.  */
 
-/* See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #ifndef _RADSEC_RADSEC_IMPL_H_
 #define _RADSEC_RADSEC_IMPL_H_ 1
@@ -18,9 +19,18 @@
 /* Data types.  */
 enum rs_cred_type {
     RS_CRED_NONE = 0,
-    RS_CRED_TLS_PSK_RSA,	/* RFC 4279.  */
+    /* TLS pre-shared keys, RFC 4279.  */
+    RS_CRED_TLS_PSK,
+    /* RS_CRED_TLS_DH_PSK, */
+    /* RS_CRED_TLS_RSA_PSK, */
 };
 typedef unsigned int rs_cred_type_t;
+
+enum rs_key_encoding {
+    RS_KEY_ENCODING_UTF8 = 1,
+    RS_KEY_ENCODING_ASCII_HEX = 2,
+};
+typedef unsigned int rs_key_encoding_t;
 
 #if defined (__cplusplus)
 extern "C" {
@@ -30,6 +40,8 @@ struct rs_credentials {
     enum rs_cred_type type;
     char *identity;
     char *secret;
+    enum rs_key_encoding secret_encoding;
+    unsigned int secret_len;
 };
 
 struct rs_error {
@@ -41,8 +53,10 @@ struct rs_error {
 struct rs_peer {
     struct rs_connection *conn;
     struct rs_realm *realm;
-    struct evutil_addrinfo *addr;
-    char *secret;
+    char *hostname;
+    char *service;
+    char *secret;               /* RADIUS secret.  */
+    struct evutil_addrinfo *addr_cache;
     struct rs_peer *next;
 };
 
@@ -56,6 +70,7 @@ struct rs_realm {
     char *cacertpath;
     char *certfile;
     char *certkeyfile;
+    struct rs_credentials *transport_cred;
     struct rs_peer *peers;
     struct rs_realm *next;
 };
@@ -77,7 +92,6 @@ struct rs_connection {
     struct rs_realm *realm;	/* Owned by ctx.  */
     struct event_base *evb;	/* Event base.  */
     struct event *tev;		/* Timeout event.  */
-    struct rs_credentials transport_credentials;
     struct rs_conn_callbacks callbacks;
     void *user_data;
     struct rs_peer *peers;
@@ -103,9 +117,9 @@ struct rs_connection {
 };
 
 enum rs_packet_flags {
-    rs_packet_hdr_read_flag,
-    rs_packet_received_flag,
-    rs_packet_sent_flag,
+    RS_PACKET_HEADER_READ,
+    RS_PACKET_RECEIVED,
+    RS_PACKET_SENT,
 };
 
 struct radius_packet;
@@ -117,12 +131,6 @@ struct rs_packet {
     struct radius_packet *rpkt;	/* FreeRADIUS object.  */
     struct rs_packet *next;	/* Used for UDP output queue.  */
 };
-
-/* Nonpublic functions (in radsec.c -- FIXME: move?).  */
-struct rs_error *rs_resolv (struct evutil_addrinfo **addr,
-			    rs_conn_type_t type,
-			    const char *hostname,
-			    const char *service);
 
 #if defined (__cplusplus)
 }

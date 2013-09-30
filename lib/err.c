@@ -1,5 +1,5 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -56,6 +56,8 @@ static const char *_errtxt[] = {
   "response from the wrong source address",	/* 40 RSE_INVALID_RESPONSE_SRC */
   "no packet data",				/* 41 RSE_NO_PACKET_DATA */
   "vendor is unknown",				/* 42 RSE_VENDOR_UNKNOWN */
+  "invalid credentials",                        /* 43 RSE_CRED */
+  "certificate validation error",               /* 44 RSE_CERT */
 };
 #define ERRTXT_SIZE (sizeof(_errtxt) / sizeof(*_errtxt))
 
@@ -156,6 +158,8 @@ rs_err_ctx_push_fl (struct rs_context *ctx, int code, const char *file,
 int
 err_conn_push_err (struct rs_connection *conn, struct rs_error *err)
 {
+  assert (conn);
+  assert (err);
 
   if (conn->err)
     rs_err_free (conn->err);

@@ -1,5 +1,5 @@
-/* Copyright 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2011,2013 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -67,7 +67,7 @@ _wcb (void *user_data)
 {
   struct rs_packet *pkt = (struct rs_packet *) user_data;
   assert (pkt);
-  pkt->flags |= rs_packet_sent_flag;
+  pkt->flags |= RS_PACKET_SENT;
   if (pkt->conn->bev)
     bufferevent_disable (pkt->conn->bev, EV_WRITE|EV_READ);
   else
@@ -127,7 +127,7 @@ rs_packet_send (struct rs_packet *pkt, void *user_data)
       conn->callbacks.sent_cb = NULL;
       conn->user_data = NULL;
 
-      if ((pkt->flags & rs_packet_sent_flag) == 0)
+      if ((pkt->flags & RS_PACKET_SENT) == 0)
 	{
 	  assert (rs_err_conn_peek_code (conn));
 	  return rs_err_conn_peek_code (conn);

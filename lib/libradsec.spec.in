@@ -11,9 +11,8 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
 
 
 
-BuildRequires:	 openssl-devel
+BuildRequires: openssl-devel
 BuildRequires: libconfuse-devel
-BuildRequires: freeradius-devel
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
@@ -41,8 +40,8 @@ developing applications that use %{name}.
 
 %build
 	export CPPFLAGS='-I%{_includedir}'
-	export LDFLAGS='-L%{_libdir} -L/usr/%{_lib}/freeradius'
-%configure --disable-static
+	export LDFLAGS='-L%{_libdir}'
+%configure --disable-static --enable-tls --enable-tls-psk
 make %{?_smp_mflags}
 
 

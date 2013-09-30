@@ -1,5 +1,5 @@
-/* Copyright 2010, 2011 NORDUnet A/S. All rights reserved.
-   See the file COPYING for licensing information.  */
+/* Copyright 2010-2012 NORDUnet A/S. All rights reserved.
+   See LICENSE for licensing information. */
 
 #if defined HAVE_CONFIG_H
 #include <config.h>
@@ -13,6 +13,7 @@
 #include <radsec/radsec-impl.h>
 #include "err.h"
 #include "peer.h"
+#include "util.h"
 
 struct rs_peer *
 peer_pick_peer (struct rs_connection *conn)
@@ -69,16 +70,17 @@ rs_peer_create (struct rs_connection *conn, struct rs_peer **peer_out)
 
 int
 rs_peer_set_address (struct rs_peer *peer, const char *hostname,
-		       const char *service)
+                     const char *service)
 {
-  struct rs_error *err;
-
   assert (peer);
-  assert (peer->realm);
+  assert (peer->conn);
+  assert (peer->conn->ctx);
 
-  err = rs_resolv (&peer->addr, peer->realm->type, hostname, service);
-  if (err)
-    return err_conn_push_err (peer->conn, err);
+  peer->hostname = rs_strdup (peer->conn->ctx, hostname);
+  peer->service = rs_strdup (peer->conn->ctx, service);
+  if (peer->hostname == NULL || peer->service == NULL)
+    return RSE_NOMEM;
+
   return RSE_OK;
 }
 
