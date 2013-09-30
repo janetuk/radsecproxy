@@ -41,7 +41,7 @@ developing applications that use %{name}.
 %build
 	export CPPFLAGS='-I%{_includedir}'
 	export LDFLAGS='-L%{_libdir}'
-%configure --disable-static
+%configure --disable-static --enable-tls --enable-tls-psk
 make %{?_smp_mflags}
 
 
