@@ -21,6 +21,9 @@
 /* Define to 1 if you have the `event_openssl' library (-levent_openssl). */
 #undef HAVE_LIBEVENT_OPENSSL
 
+/* Define to 1 if you have the `ssl' library (-lssl). */
+#undef HAVE_LIBSSL
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -111,6 +114,9 @@
 
 /* TLS (RadSec) enabled */
 #undef RS_ENABLE_TLS
+
+/* TLS-PSK (TLS preshared keys) enabled */
+#undef RS_ENABLE_TLS_PSK
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

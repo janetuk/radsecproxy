@@ -51,8 +51,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = client$(EXEEXT)
-subdir = examples
+@RS_ENABLE_TLS_TRUE@am__append_1 = \
+@RS_ENABLE_TLS_TRUE@	tlscommon.c tlscommon.h
+
+subdir = radsecproxy
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -65,13 +67,16 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-PROGRAMS = $(noinst_PROGRAMS)
-am_client_OBJECTS = client-client-blocking.$(OBJEXT)
-client_OBJECTS = $(am_client_OBJECTS)
-client_DEPENDENCIES = ../libradsec.la
-client_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(client_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+libradsec_radsecproxy_la_LIBADD =
+am__libradsec_radsecproxy_la_SOURCES_DIST = debug.c debug.h gconfig.h \
+	hash.c hash.h hostport_types.h list.c list.h radmsg.h \
+	radsecproxy.h tlv11.h util.c util.h tlscommon.c tlscommon.h
+@RS_ENABLE_TLS_TRUE@am__objects_1 = tlscommon.lo
+am_libradsec_radsecproxy_la_OBJECTS = debug.lo hash.lo list.lo util.lo \
+	$(am__objects_1)
+libradsec_radsecproxy_la_OBJECTS =  \
+	$(am_libradsec_radsecproxy_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -85,8 +90,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(client_SOURCES)
-DIST_SOURCES = $(client_SOURCES)
+SOURCES = $(libradsec_radsecproxy_la_SOURCES)
+DIST_SOURCES = $(am__libradsec_radsecproxy_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -209,11 +214,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
+ACLOCAL_AMFLAGS = -I m4
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)
 AM_CFLAGS = -Wall -Werror -g
-client_SOURCES = client-blocking.c
-client_LDADD = ../libradsec.la #-lefence
-client_CFLAGS = $(AM_CFLAGS) -DUSE_CONFIG_FILE
+noinst_LTLIBRARIES = libradsec-radsecproxy.la
+libradsec_radsecproxy_la_SOURCES = debug.c debug.h gconfig.h hash.c \
+	hash.h hostport_types.h list.c list.h radmsg.h radsecproxy.h \
+	tlv11.h util.c util.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:
@@ -227,9 +234,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign examples/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign radsecproxy/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign examples/Makefile
+	  $(AUTOMAKE) --foreign radsecproxy/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -249,17 +256,16 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-client$(EXEEXT): $(client_OBJECTS) $(client_DEPENDENCIES) $(EXTRA_client_DEPENDENCIES) 
-	@rm -f client$(EXEEXT)
-	$(client_LINK) $(client_OBJECTS) $(client_LDADD) $(LIBS)
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libradsec-radsecproxy.la: $(libradsec_radsecproxy_la_OBJECTS) $(libradsec_radsecproxy_la_DEPENDENCIES) $(EXTRA_libradsec_radsecproxy_la_DEPENDENCIES) 
+	$(LINK)  $(libradsec_radsecproxy_la_OBJECTS) $(libradsec_radsecproxy_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -267,7 +273,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client-client-blocking.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tlscommon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -289,20 +299,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-client-client-blocking.o: client-blocking.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -MT client-client-blocking.o -MD -MP -MF $(DEPDIR)/client-client-blocking.Tpo -c -o client-client-blocking.o `test -f 'client-blocking.c' || echo '$(srcdir)/'`client-blocking.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/client-client-blocking.Tpo $(DEPDIR)/client-client-blocking.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='client-blocking.c' object='client-client-blocking.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -c -o client-client-blocking.o `test -f 'client-blocking.c' || echo '$(srcdir)/'`client-blocking.c
-
-client-client-blocking.obj: client-blocking.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -MT client-client-blocking.obj -MD -MP -MF $(DEPDIR)/client-client-blocking.Tpo -c -o client-client-blocking.obj `if test -f 'client-blocking.c'; then $(CYGPATH_W) 'client-blocking.c'; else $(CYGPATH_W) '$(srcdir)/client-blocking.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/client-client-blocking.Tpo $(DEPDIR)/client-client-blocking.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='client-blocking.c' object='client-client-blocking.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -c -o client-client-blocking.obj `if test -f 'client-blocking.c'; then $(CYGPATH_W) 'client-blocking.c'; else $(CYGPATH_W) '$(srcdir)/client-blocking.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -394,7 +390,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LTLIBRARIES)
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -428,7 +424,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -500,7 +496,7 @@ uninstall-am:
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-noinstPROGRAMS ctags distclean \
+	clean-libtool clean-noinstLTLIBRARIES ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am install-dvi \
