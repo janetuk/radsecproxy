@@ -11,5 +11,5 @@
 
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-tls LDFLAGS='-Wl,-L/usr/lib/freeradius -Wl,--rpath=/usr/lib/freeradius' CFLAGS='$(shell dpkg-buildflags --get CFLAGS) -pthread'
+	dh_auto_configure -- --enable-tls --enable-tls-psk  CFLAGS='$(shell dpkg-buildflags --get CFLAGS) -pthread'
 
