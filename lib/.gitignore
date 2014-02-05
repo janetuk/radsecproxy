@@ -1,11 +1,8 @@
 *.*~*
 TAGS
-lib/doc
 *.o
-*.gch
 .deps
 .libs
-o/
 autom4te.cache
 config.log
 config.h*
