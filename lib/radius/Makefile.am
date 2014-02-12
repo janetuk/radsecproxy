@@ -2,8 +2,7 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
 BUILT_SOURCES = dictionaries.c
-
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)
 AM_CFLAGS = -Wall -g
 
 noinst_LTLIBRARIES = libradsec-radius.la

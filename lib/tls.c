@@ -6,17 +6,27 @@
 #endif
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <limits.h>
+#if defined HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
+#include <openssl/rand.h>
+#include <openssl/crypto.h>
 #include <radsec/radsec.h>
 #include <radsec/radsec-impl.h>
 
 #include <regex.h>
 #include "radsecproxy/list.h"
 #include "radsecproxy/radsecproxy.h"
+
+#include "tls.h"
 
 static struct tls *
 _get_tlsconf (struct rs_connection *conn, const struct rs_realm *realm)
@@ -112,8 +122,132 @@ psk_client_cb (SSL *ssl,
 }
 #endif  /* RS_ENABLE_TLS_PSK */
 
+/** Read \a buf_len bytes from one of the random devices into \a
+    buf. Return 0 on success and -1 on failure. */
+static int
+load_rand_ (uint8_t *buf, size_t buf_len)
+{
+  static const char *fns[] = {"/dev/urandom", "/dev/random", NULL};
+  int i;
+
+  if (buf_len > SSIZE_MAX)
+    return -1;
+
+  for (i = 0; fns[i] != NULL; i++)
+    {
+      size_t nread = 0;
+      int fd = open (fns[i], O_RDONLY);
+      if (fd < 0)
+        continue;
+      while (nread != buf_len)
+        {
+          ssize_t r = read (fd, buf + nread, buf_len - nread);
+          if (r < 0)
+            return -1;
+          if (r == 0)
+            break;
+          nread += r;
+        }
+      close (fd);
+      if (nread != buf_len)
+        return -1;
+      return 0;
+    }
+  return -1;
+}
+
+/** Initialise OpenSSL's PRNG by possibly invoking RAND_poll() and by
+    feeding RAND_seed() data from one of the random devices. If either
+    succeeds, we're happy and return 0. */
+static int
+init_openssl_rand_ (void)
+{
+  long openssl_version = 0;
+  int openssl_random_init_flag = 0;
+  int our_random_init_flag = 0;
+  uint8_t buf[32];
+
+  /* Older OpenSSL has a crash bug in RAND_poll (when a file it opens
+     gets a file descriptor with a number higher than FD_SETSIZE) so
+     use it only for newer versions. */
+  openssl_version = SSLeay ();
+  if (openssl_version >= OPENSSL_V (0,9,8,'c'))
+    openssl_random_init_flag = RAND_poll ();
+
+  our_random_init_flag = !load_rand_ (buf, sizeof(buf));
+  if (our_random_init_flag)
+    RAND_seed (buf, sizeof(buf));
+  memset (buf, 0, sizeof(buf)); /* FIXME: What if memset() is optimised out? */
+
+  if (!openssl_random_init_flag && !our_random_init_flag)
+    return -1;
+  if (!RAND_bytes (buf, sizeof(buf)))
+    return -1;
+  return 0;
+}
+
+#if defined HAVE_PTHREADS
+/** Array of pthread_mutex_t for OpenSSL. Allocated and initialised in
+    \a init_locking_ and never freed. */
+static pthread_mutex_t *s_openssl_mutexes = NULL;
+/** Number of pthread_mutex_t's allocated at s_openssl_mutexes. */
+static int s_openssl_mutexes_count = 0;
+
+/** Callback for OpenSSL when a lock is to be held or released. */
+static void
+openssl_locking_cb_ (int mode, int i, const char *file, int line)
+{
+  if (s_openssl_mutexes == NULL || i >= s_openssl_mutexes_count)
+    return;
+  if (mode & CRYPTO_LOCK)
+    pthread_mutex_lock (&s_openssl_mutexes[i]);
+  else
+    pthread_mutex_unlock (&s_openssl_mutexes[i]);
+}
+
+/** Initialise any locking needed for being thread safe. Libradsec has
+    all its own state in one or more struct rs_context and doesn't
+    need locks but libraries used by libradsec may need protection. */
+static int
+init_locking_ ()
+{
+  int i, n;
+  n = CRYPTO_num_locks ();
+
+  s_openssl_mutexes = calloc (n, sizeof(pthread_mutex_t));
+  if (s_openssl_mutexes == NULL)
+    return -RSE_NOMEM;
+  for (i = 0; i < n; i++)
+    pthread_mutex_init (&s_openssl_mutexes[i], NULL);
+  s_openssl_mutexes_count = n;
+
+  return 0;
+}
+#endif  /* HAVE_PTHREADS */
+
+/** Initialise the TLS library. Return 0 on success, -1 on failure. */
 int
-rs_tls_init (struct rs_connection *conn)
+tls_init ()
+{
+  SSL_load_error_strings ();
+#if defined HAVE_PTHREADS
+  if (CRYPTO_get_locking_callback () == NULL)
+    {
+      assert (s_openssl_mutexes_count == 0);
+      /* Allocate and initialise mutexes. We will never free
+         these. FIXME: Is there a portable way of having a function
+         invoked when a solib is unloaded? -ln */
+      if (init_locking_ ())
+        return -1;
+      CRYPTO_set_locking_callback (openssl_locking_cb_);
+    }
+#endif  /* HAVE_PTHREADS */
+  SSL_library_init ();
+  return init_openssl_rand_ ();
+}
+
+int
+tls_init_conn (struct rs_connection *conn)
 {
   struct rs_context *ctx = NULL;
   struct tls *tlsconf = NULL;

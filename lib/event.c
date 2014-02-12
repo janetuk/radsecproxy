@@ -92,6 +92,21 @@ event_retransmit_timeout_cb (int fd, short event, void *data)
       rs_debug (("%s: retransmission timeout on %p (fd %d) sending to %p\n",
 		 __func__, conn, conn->fd, conn->active_peer));
       rs_err_conn_push_fl (conn, RSE_TIMEOUT_IO, __FILE__, __LINE__, NULL);
+
+      /* Disable/delete read and write events. Timing out on reading
+         might f.ex. trigger resending of a message. It'd be
+         surprising to end up reading without having enabled/created a
+         read event in that case. */
+      if (conn->bev)            /* TCP. */
+        bufferevent_disable (conn->bev, EV_WRITE|EV_READ);
+      else                      /* UDP. */
+        {
+          if (conn->wev)
+            event_del (conn->wev);
+          if (conn->rev)
+            event_del (conn->rev);
+        }
+
       event_loopbreak (conn);
     }
 }
@@ -143,7 +158,7 @@ event_init_bufferevent (struct rs_connection *conn, struct rs_peer *peer)
 #if defined (RS_ENABLE_TLS)
   else if (conn->realm->type == RS_CONN_TYPE_TLS)
     {
-      if (rs_tls_init (conn))
+      if (tls_init_conn (conn))
 	return -1;
       /* Would be convenient to pass BEV_OPT_CLOSE_ON_FREE but things
 	 seem to break when be_openssl_ctrl() (in libevent) calls

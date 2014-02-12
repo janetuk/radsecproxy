@@ -31,7 +31,7 @@
       pskhexstr = STRING # Transport pre-shared key, ASCII hex form.
       pskid = STRING
       pskex = "PSK"|"DHE_PSK"|"RSA_PSK"
-      disable_hostname_check = yes|no
+      disable_hostname_check = "yes"|"no"
   }
 
   # client specific realm config options

@@ -19,7 +19,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = radius radsecproxy include . examples
 DIST_SUBDIRS = $(SUBDIRS) tests
 
-INCLUDES = -I$(srcdir)/include
+AM_CPPFLAGS = -I$(srcdir)/include
 AM_CFLAGS = -Wall -Werror -g
 
 lib_LTLIBRARIES = libradsec.la
@@ -62,7 +62,7 @@ libradsec_la_SOURCES += \
 	udp.h \
 	util.h
 
-EXTRA_DIST = HACKING LICENSE libradsec.spec radsec.sym
+EXTRA_DIST = CHANGES HACKING LICENSE libradsec.spec radsec.sym
 EXTRA_libradsec_la_DEPENDENCIES = radsec.sym
 AM_DISTCHECK_CONFIGURE_FLAGS = --enable-tls --enable-tls-psk
 
