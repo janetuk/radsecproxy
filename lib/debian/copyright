@@ -1,32 +1,34 @@
-Format: http://dep.debian.net/deps/dep5
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libradsec
-Source: http://git.nordu.net/?p=radsecproxy.git;a=shortlog;h=refs/heads/libradsec
+Source: http://git.nordu.net/?p=libradsec.git;
 
 Files: *
-Copyright: 2006-2010, UNINETT AS
-License: BSD or GPL2+
- Licensed under GPL2+ and the following
- * Copyright (c) 2010-2011, NORDUnet A/S
+Copyright: 2010-2013, NORDUnet A/S
+ 2007-2012, UNINETT AS
+License: BSd-three-clause
+ * Copyright (c) 2007-2010, UNINETT AS
+ * Copyright (c) 2011, JANET(UK)
+ * Copyright (c) 2010-2013, NORDUnet A/S
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *    1. Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *    2. Redistributions in binary form must reproduce the above
  *       copyright notice, this list of conditions and the following
  *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- * 
- *    3. Neither the name of the UNINETT AS or the NORDUnet A/S, nor the
- *       names of the contributors may be used to endorse or promote
- *       products derived from this software without specific prior
- *       written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY UNINETT AS AND NORDUNET A/S ``AS IS'' AND
+ *
+ *    3. Neither the name of NORDUnet A/S nor the names of the
+ *       contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written
+ *       permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY NORDUNET A/S ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL NORDUNET A/S OR CONTRIBUTORS
@@ -38,8 +40,30 @@ License: BSD or GPL2+
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+Files: md5.*
+Copyright: 2001, Alexander Peslyak
+License:
+ * This software was written by Alexander Peslyak in 2001.  No copyright is
+ * claimed, and the software is hereby placed in the public domain.
+ * In case this attempt to disclaim copyright and place the software in the
+ * public domain is deemed null and void, then the software is
+ * Copyright (c) 2001 Alexander Peslyak and it is hereby released to the
+ * general public under the following terms:
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted.
+ *
+ * There's ABSOLUTELY NO WARRANTY, express or implied.
+
 Files: debian/*
 Copyright: 2011 Painless Security, LLC
+License: GPL-2
+
+Files: radius/*
+Copyright:  2011, Network RADIUS SARL
+License: bsd-three-clause-nr
+
 License: GPL-2
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -55,4 +79,31 @@ License: GPL-2
  .
  On Debian systems, the complete text of the GNU General
  Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+
+License: bsd-three-clause-nr
+ Copyright (c) 2011, Network RADIUS SARL
+ All rights reserved.
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of the <organization> nor the
+       names of its contributors may be used to endorse or promote products
+       derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
