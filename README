@@ -1,7 +1,48 @@
-This is libradsec, not radsecproxy, sharing repository with
-radsecproxy.
+Libradsec is a RADIUS library for clients doing RADIUS over UDP or
+TLS. The goal is to add support for writing servers (and thus proxies)
+and to add transports TCP and DTLS.
 
-For radsecproxy, see branch 'master'.
 
-The source code can be found at
-http://git.nordu.net/?p=radsecproxy.git;a=summary .
+The canonical pickup point is
+http://git.nordu.net/?p=radsecproxy.git;a=shortlog;h=refs/heads/libradsec
+
+
+The source code is licensed under a 3-clause BSD license. See the
+LICENSE file.
+
+
+Libradsec depends on 
+- libconfuse
+- libevent2
+- openssl (unless configured with --disable-tls)
+
+
+To compile the library and the examples, do something like
+
+  sh autogen.sh && ./configure && make
+
+
+There are a couple of options that can be used when configuring. See
+
+  ./configure --help
+
+for the full list. Worth mentioning here is --enable-tls-psk.
+
+If the preprocessor has a hard time finding some of the header files
+are, try setting environment variable CPPFLAGS at configure
+time. Example:
+
+  CPPFLAGS="-I/usr/local/include" ./configure --enable-tls
+
+If the link editor has trouble finding any of the libraries needed,
+try setting environment variable LDFLAGS at configure time. Example:
+
+  LDFLAGS="-L/usr/local/lib" ./configure --enable-tls
+
+
+The parts of the library which has been tested has been so on Linux
+(Debian) with libconfuse (2.7), libevent (2.0.19) and OpenSSL
+(1.0.1c).
+
+The file HACKING contains more detailed info on the state of the
+various parts of the library.
