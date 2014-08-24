@@ -7,7 +7,7 @@
 #export DEB_CFLAGS_MAINT_APPEND
 
 %:
-	dh $@  --with autoreconf
+	dh $@  --with autoreconf --parallel
 
 
 override_dh_auto_configure:

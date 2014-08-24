@@ -2,8 +2,14 @@ libradsec (0.0.5-1) unstable; urgency=medium
 
   * Update copyright file and review licenses of source code
   * Upload to Debian, Closes: #647742
+  * Note that lintian miss-detected gpl+openssl, because only the
+    packaging is GPL and the packaging includes no code.  In case I should
+    forget to mark this in debian/copyright in the future if there are
+    ever any patches, any code patches developed by Painless Security are
+    intended to be licensed under the libradsec BSD license.
+  * Multiarch
 
- -- Sam Hartman <hartmans@debian.org>  Sat, 23 Aug 2014 19:00:50 -0400
+ -- Sam Hartman <hartmans@debian.org>  Sun, 24 Aug 2014 13:23:12 -0400
 
 libradsec (0.0.4-2) UNRELEASED; urgency=low
 
@@ -43,6 +49,6 @@ libradsec (0.0.2+20110426-2) unstable; urgency=low
 
 libradsec (0.0.2+20110426-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release 
 
  -- Sam Hartman <hartmans@debian.org>  Tue, 26 Apr 2011 06:15:32 -0400
