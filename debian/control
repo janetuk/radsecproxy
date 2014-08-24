@@ -12,6 +12,9 @@ Section: libdevel
 Architecture: any
 Depends: libradsec0 (= ${binary:Version}), ${misc:Depends}
 Description: RADIUS library with RADSEc support 
+ RADIUS (RFC 2865) provides a protocol for authenticating and
+ authorizing users to network services.
+ .
  This is the development library for libradsec, a RADIUS library
  supporting RADIUS and RADSEC.
 
@@ -19,6 +22,11 @@ Package: libradsec0
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Description: RADIUS library supporting RADSEC
+ RADIUS (RFC 2865) provides a mechanism for authenticating and
+ authorizing users to use network services.
+ .
  This is the shared library for a RADIUS library supporting RADSEC
  (RADIUS over TLS).
