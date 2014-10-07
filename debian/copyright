@@ -42,6 +42,15 @@ License: BSd-three-clause
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+Files: radsecproxy/radsecproxy.h
+Copyright: 2006-2009, Stig Venaas <venaas@uninett.no>
+License:
+ * Copyright (C) 2006-2009 Stig Venaas <venaas@uninett.no>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+
 
 Files: md5.*
 Copyright: 2001, Alexander Peslyak
