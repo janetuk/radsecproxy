@@ -1,3 +1,10 @@
+libradsec (0.0.5-3) unstable; urgency=medium
+
+  * Build depend on openssl 1.0, Closes: #828410
+  * Update standards version to 3.9.8 (no changes)
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 19 Dec 2016 09:10:41 -0500
+
 libradsec (0.0.5-2) unstable; urgency=medium
 
   * Include license for radsecproxy/radsecproxy.h, Thanks Thorsten Alteholz
