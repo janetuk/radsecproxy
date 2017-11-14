@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <string.h>
 #if defined HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
