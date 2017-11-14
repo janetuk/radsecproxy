@@ -34,7 +34,7 @@
 #
 #  $Id$
 #
-require "common.pl";
+require "./common.pl";
 
 #
 #  Read all of the dictionaries
