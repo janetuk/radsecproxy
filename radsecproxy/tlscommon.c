@@ -346,7 +346,7 @@ int subjectaltnameaddr(X509 *cert, int family, const struct in6_addr *addr) {
 	if (gn->type != GEN_IPADD)
 	    continue;
 	r = -1;
-	v = (char *)ASN1_STRING_data(gn->d.ia5);
+	v = (char *)ASN1_STRING_get0_data(gn->d.ia5);
 	l = ASN1_STRING_length(gn->d.ia5);
 	if (((family == AF_INET && l == sizeof(struct in_addr)) || (family == AF_INET6 && l == sizeof(struct in6_addr)))
 	    && !memcmp(v, &addr, l)) {
@@ -382,7 +382,7 @@ int subjectaltnameregexp(X509 *cert, int type, const char *exact,  const regex_t
 	if (gn->type != type)
 	    continue;
 	r = -1;
-	v = (char *)ASN1_STRING_data(gn->d.ia5);
+	v = (char *)ASN1_STRING_get0_data(gn->d.ia5);
 	l = ASN1_STRING_length(gn->d.ia5);
 	if (l <= 0)
 	    continue;
@@ -426,7 +426,7 @@ int cnregexp(X509 *cert, const char *exact, const regex_t *regex) {
 	    break;
 	e = X509_NAME_get_entry(nm, loc);
 	t = X509_NAME_ENTRY_get_data(e);
-	v = (char *) ASN1_STRING_data(t);
+	v = (char *) ASN1_STRING_get0_data(t);
 	l = ASN1_STRING_length(t);
 	if (l < 0)
 	    continue;
