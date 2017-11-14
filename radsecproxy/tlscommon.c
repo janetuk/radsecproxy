@@ -214,10 +214,15 @@ static SSL_CTX *tlscreatectx(uint8_t type, struct tls *conf) {
 #endif  /* RADPROT_TLS */
 #ifdef RADPROT_DTLS
     case RAD_DTLS:
+#if OPENSSL_VERSION_NUMBER >= 0x10002000
+        /* DTLS_method() seems to have been introduced in OpenSSL 1.0.2. */
+	ctx = SSL_CTX_new(DTLS_method());
+#else
 	ctx = SSL_CTX_new(DTLSv1_method());
+#endif
 	SSL_CTX_set_read_ahead(ctx, 1);
 	break;
-#endif
+#endif  /* RADPROT_DTLS */
     }
     if (!ctx) {
 	debug(DBG_ERR, "tlscreatectx: Error initialising SSL/TLS in TLS context %s", conf->name);
