@@ -1,0 +1,74 @@
+variables:
+  DOCKER_DRIVER: overlay2
+
+stages:
+- build
+
+before_script:
+    - rm -fr build SOURCES RPMS
+
+centos6:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/centos6:latest
+  stage: build
+  script:
+    - yum -y update
+    - sh autogen.sh
+    - ./configure
+    - make dist
+    - mkdir -p SOURCES
+    - mv libradsec*.tar.gz SOURCES
+    - rpmbuild -bb libradsec.spec --define "_topdir `pwd`"
+  artifacts:
+    paths:
+        - RPMS
+
+centos7:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/centos7:latest
+  stage: build
+  script:
+    - yum -y update
+    - autoreconf -fi
+    - ./configure
+    - make dist
+    - mkdir -p SOURCES
+    - mv libradsec-*.tar.gz SOURCES
+    - rpmbuild -bb libradsec.spec --define "_topdir `pwd`"
+  artifacts:
+    paths:
+        - RPMS
+
+debian8:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/debian8:latest
+  stage: build
+  script:
+    - rm -fr build SOURCES RPMS
+    - apt-get update
+    - apt-get -y dist-upgrade
+    - autoreconf -fi
+    - ./configure
+    - make dist
+    - mv libradsec-0.0.5.tar.gz ../libradsec_0.0.5.orig.tar.gz
+    - debuild -us -uc
+    - mkdir build
+    - cp ../*.deb build
+  artifacts:
+    paths:
+        - build/*.deb
+
+debian9:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/debian9:latest
+  stage: build
+  script:
+    - rm -fr build SOURCES RPMS
+    - apt-get update
+    - apt-get -y dist-upgrade
+    - autoreconf -fi
+    - ./configure
+    - PERL5LIB=. make dist
+    - mv libradsec-0.0.5.tar.gz ../libradsec_0.0.5.orig.tar.gz
+    - debuild -us -uc
+    - mkdir build
+    - cp ../*.deb build
+  artifacts:
+    paths:
+        - build/*.deb
