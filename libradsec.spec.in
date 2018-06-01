@@ -16,8 +16,12 @@ BuildRequires: libconfuse-devel
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
-BuildRequires: libevent-devel >= 2.0
 
+%if 0%{?el6}
+BuildRequires: libevent2-devel
+%else
+BuildRequires: libevent-devel >= 2.0
+%endif
 
 
 %description
