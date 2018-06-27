@@ -10,6 +10,8 @@ before_script:
 centos6:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/centos6:latest
   stage: build
+  tags:
+    - moonshot
   script:
     - yum -y update
     - sh autogen.sh
@@ -25,6 +27,8 @@ centos6:
 centos7:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/centos7:latest
   stage: build
+  tags:
+    - moonshot
   script:
     - yum -y update
     - autoreconf -fi
@@ -40,6 +44,8 @@ centos7:
 debian8:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian8:latest
   stage: build
+  tags:
+    - moonshot
   script:
     - rm -fr build SOURCES RPMS
     - apt-get update
@@ -58,6 +64,8 @@ debian8:
 debian9:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian9:latest
   stage: build
+  tags:
+    - moonshot
   script:
     - rm -fr build SOURCES RPMS
     - apt-get update
