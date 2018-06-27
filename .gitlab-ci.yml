@@ -13,7 +13,6 @@ centos6:
   tags:
     - moonshot
   script:
-    - yum -y update
     - sh autogen.sh
     - ./configure
     - make dist
@@ -30,7 +29,6 @@ centos7:
   tags:
     - moonshot
   script:
-    - yum -y update
     - autoreconf -fi
     - ./configure
     - make dist
@@ -47,9 +45,6 @@ debian8:
   tags:
     - moonshot
   script:
-    - rm -fr build SOURCES RPMS
-    - apt-get update
-    - apt-get -y dist-upgrade
     - autoreconf -fi
     - ./configure
     - make dist
@@ -67,9 +62,57 @@ debian9:
   tags:
     - moonshot
   script:
-    - rm -fr build SOURCES RPMS
-    - apt-get update
-    - apt-get -y dist-upgrade
+    - autoreconf -fi
+    - ./configure
+    - PERL5LIB=. make dist
+    - mv libradsec-0.0.5.tar.gz ../libradsec_0.0.5.orig.tar.gz
+    - debuild -us -uc
+    - mkdir build
+    - cp ../*.deb build
+  artifacts:
+    paths:
+        - build/*.deb
+
+ubuntu14:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/ubuntu14:latest
+  stage: build
+  tags:
+    - moonshot
+  script:
+    - autoreconf -fi
+    - ./configure
+    - PERL5LIB=. make dist
+    - mv libradsec-0.0.5.tar.gz ../libradsec_0.0.5.orig.tar.gz
+    - debuild -us -uc
+    - mkdir build
+    - cp ../*.deb build
+  artifacts:
+    paths:
+        - build/*.deb
+
+ubuntu16:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/ubuntu16:latest
+  stage: build
+  tags:
+    - moonshot
+  script:
+    - autoreconf -fi
+    - ./configure
+    - PERL5LIB=. make dist
+    - mv libradsec-0.0.5.tar.gz ../libradsec_0.0.5.orig.tar.gz
+    - debuild -us -uc
+    - mkdir build
+    - cp ../*.deb build
+  artifacts:
+    paths:
+        - build/*.deb
+
+ubuntu18:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/ubuntu18:latest
+  stage: build
+  tags:
+    - moonshot
+  script:
     - autoreconf -fi
     - ./configure
     - PERL5LIB=. make dist
