@@ -70,7 +70,7 @@ debian9:
     - apt-get update
     - useradd tmpuser
     - chown tmpuser .
-    - su tmpuser -c "apt-get source libevent"
+    - su tmpuser -c "apt-get source -y libevent"
     - cd libevent-2.0.21-stable
     - sed -i 's/libssl-dev/libssl1.0-dev/g' debian/control
     - dch -l moonshot "Build with OpenSSL 1.0"
@@ -139,7 +139,7 @@ ubuntu18:
     - apt-get update
     - useradd tmpuser
     - chown tmpuser .
-    - su tmpuser -c "apt-get source libevent"
+    - su tmpuser -c "apt-get source -y libevent"
     - cd libevent-2.1.8-stable
     - sed -i 's/libssl-dev/libssl1.0-dev/g' debian/control
     - dch -l moonshot "Build with OpenSSL 1.0"
