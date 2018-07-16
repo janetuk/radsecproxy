@@ -20,6 +20,7 @@ centos6:
     - mkdir -p SOURCES
     - mv libradsec*.tar.gz SOURCES
     - rpmbuild -bb libradsec.spec --define "_topdir `pwd`"
+    - for i in RPMS/x86_64/*.rpm; do curl --user "$NEXUS_USER:$NEXUS_PWD" -f --upload-file "$i"  https://nexus.ci.ti.ja.net/repository/moonshot/centos6/; done
   artifacts:
     paths:
         - RPMS
@@ -37,6 +38,7 @@ centos7:
     - mkdir -p SOURCES
     - mv libradsec-*.tar.gz SOURCES
     - rpmbuild -bb libradsec.spec --define "_topdir `pwd`"
+    - for i in RPMS/x86_64/*.rpm; do curl --user "$NEXUS_USER:$NEXUS_PWD" -f --upload-file "$i"  https://nexus.ci.ti.ja.net/repository/moonshot/centos7/; done
   artifacts:
     paths:
         - RPMS
