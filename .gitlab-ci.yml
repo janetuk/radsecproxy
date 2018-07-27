@@ -64,7 +64,8 @@ before_script:
     - cd ..
     - git clean -xdf
     # libradsec build
-    - dch -l "b$CI_PIPELINE_ID" "Include job ID"
+    - apt-get -y update && apt-get -y dist-upgrade
+    - dch -l ".$CI_JOB_NAME.b$CI_PIPELINE_ID" "Include job ID"
     - autoreconf -fi
     - ./configure
     - PERL5LIB=. make dist
