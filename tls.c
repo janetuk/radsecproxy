@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <string.h>
 #if defined HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
@@ -187,6 +188,7 @@ init_openssl_rand_ (void)
 }
 
 #if defined HAVE_PTHREADS
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 /** Array of pthread_mutex_t for OpenSSL. Allocated and initialised in
     \a init_locking_ and never freed. */
 static pthread_mutex_t *s_openssl_mutexes = NULL;
@@ -223,6 +225,7 @@ init_locking_ ()
 
   return 0;
 }
+#endif  /* OPENSSL_VERSION_NUMBER < 0x10100000 */
 #endif  /* HAVE_PTHREADS */
 
 /** Initialise the TLS library. Return 0 on success, -1 on failure. */
@@ -231,6 +234,7 @@ tls_init ()
 {
   SSL_load_error_strings ();
 #if defined HAVE_PTHREADS
+#if OPENSSL_VERSION_NUMBER < 0x10100000
   if (CRYPTO_get_locking_callback () == NULL)
     {
       assert (s_openssl_mutexes_count == 0);
@@ -241,6 +245,7 @@ tls_init ()
         return -1;
       CRYPTO_set_locking_callback (openssl_locking_cb_);
     }
+#endif  /* OPENSSL_VERSION_NUMBER < 0x10100000 */
 #endif  /* HAVE_PTHREADS */
   SSL_library_init ();
   return init_openssl_rand_ ();
