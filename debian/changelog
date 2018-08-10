@@ -1,3 +1,9 @@
+libradsec (0.0.6-1) UNRELEASED; urgency=medium
+
+  * Update maintainer information
+
+ -- moonshot@jisc.ac.uk <moonshot@jisc.ac.uk>  Fri, 10 Aug 2018 15:00:35 +0000
+
 libradsec (0.0.5-3) unstable; urgency=medium
 
   * Build depend on openssl 1.0, Closes: #828410
