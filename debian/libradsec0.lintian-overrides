@@ -1,0 +1,2 @@
+# It's upset because debian/* is GPL, but there's no code in that
+libradsec0: possible-gpl-code-linked-with-openssl

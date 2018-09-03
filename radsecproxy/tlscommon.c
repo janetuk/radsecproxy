@@ -202,15 +202,27 @@ static SSL_CTX *tlscreatectx(uint8_t type, struct tls *conf) {
     switch (type) {
 #ifdef RADPROT_TLS
     case RAD_TLS:
-	ctx = SSL_CTX_new(TLSv1_method());
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+        /* TLS_method() was introduced in OpenSSL 1.1.0. */
+	ctx = SSL_CTX_new(TLS_method());
+#else
+        /* No TLS_method(), use SSLv23_method() and disable SSLv2 and SSLv3. */
+        ctx = SSL_CTX_new(SSLv23_method());
+        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 	break;
 #endif
+#endif  /* RADPROT_TLS */
 #ifdef RADPROT_DTLS
     case RAD_DTLS:
+#if OPENSSL_VERSION_NUMBER >= 0x10002000
+        /* DTLS_method() seems to have been introduced in OpenSSL 1.0.2. */
+	ctx = SSL_CTX_new(DTLS_method());
+#else
 	ctx = SSL_CTX_new(DTLSv1_method());
+#endif
 	SSL_CTX_set_read_ahead(ctx, 1);
 	break;
-#endif
+#endif  /* RADPROT_DTLS */
     }
     if (!ctx) {
 	debug(DBG_ERR, "tlscreatectx: Error initialising SSL/TLS in TLS context %s", conf->name);
@@ -346,7 +358,7 @@ int subjectaltnameaddr(X509 *cert, int family, const struct in6_addr *addr) {
 	if (gn->type != GEN_IPADD)
 	    continue;
 	r = -1;
-	v = (char *)ASN1_STRING_data(gn->d.ia5);
+	v = (char *)ASN1_STRING_get0_data(gn->d.ia5);
 	l = ASN1_STRING_length(gn->d.ia5);
 	if (((family == AF_INET && l == sizeof(struct in_addr)) || (family == AF_INET6 && l == sizeof(struct in6_addr)))
 	    && !memcmp(v, &addr, l)) {
@@ -382,7 +394,7 @@ int subjectaltnameregexp(X509 *cert, int type, const char *exact,  const regex_t
 	if (gn->type != type)
 	    continue;
 	r = -1;
-	v = (char *)ASN1_STRING_data(gn->d.ia5);
+	v = (char *)ASN1_STRING_get0_data(gn->d.ia5);
 	l = ASN1_STRING_length(gn->d.ia5);
 	if (l <= 0)
 	    continue;
@@ -426,7 +438,7 @@ int cnregexp(X509 *cert, const char *exact, const regex_t *regex) {
 	    break;
 	e = X509_NAME_get_entry(nm, loc);
 	t = X509_NAME_ENTRY_get_data(e);
-	v = (char *) ASN1_STRING_data(t);
+	v = (char *) ASN1_STRING_get0_data(t);
 	l = ASN1_STRING_length(t);
 	if (l < 0)
 	    continue;

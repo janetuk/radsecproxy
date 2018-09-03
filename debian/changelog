@@ -1,0 +1,73 @@
+libradsec (0.0.6-1) unstable; urgency=medium
+
+  * Update maintainer information
+
+ -- assent@jisc.ac.uk <assent@jisc.ac.uk>  Fri, 10 Aug 2018 15:00:35 +0000
+
+libradsec (0.0.5-3) unstable; urgency=medium
+
+  * Build depend on openssl 1.0, Closes: #828410
+  * Update standards version to 3.9.8 (no changes)
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 19 Dec 2016 09:10:41 -0500
+
+libradsec (0.0.5-2) unstable; urgency=medium
+
+  * Include license for radsecproxy/radsecproxy.h, Thanks Thorsten Alteholz
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 07 Oct 2014 07:27:24 -0400
+
+libradsec (0.0.5-1) unstable; urgency=medium
+
+  * Update copyright file and review licenses of source code
+  * Upload to Debian, Closes: #647742
+  * Note that lintian miss-detected gpl+openssl, because only the
+    packaging is GPL and the packaging includes no code.  In case I should
+    forget to mark this in debian/copyright in the future if there are
+    ever any patches, any code patches developed by Painless Security are
+    intended to be licensed under the libradsec BSD license.
+  * Multiarch
+
+ -- Sam Hartman <hartmans@debian.org>  Sun, 24 Aug 2014 13:23:12 -0400
+
+libradsec (0.0.4-2) UNRELEASED; urgency=low
+
+  * Add disable_hostname_check option
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 03 Oct 2013 10:57:37 -0400
+
+libradsec (0.0.4-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 30 Sep 2013 13:05:03 -0400
+
+libradsec (0.0.3-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 18 Sep 2012 16:12:42 -0400
+
+libradsec (0.0.2+20120125-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 25 Jan 2012 11:54:28 -0500
+
+libradsec (0.0.2+20110426-4) unstable; urgency=low
+
+  * Work around old oneiric dpkg-buildflags
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 19 Jan 2012 08:03:38 -0500
+
+libradsec (0.0.2+20110426-2) unstable; urgency=low
+
+  * Include -threads in CFLAGS for ubuntu builds
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 18 Jan 2012 16:48:10 -0500
+
+libradsec (0.0.2+20110426-1) unstable; urgency=low
+
+  * Initial release 
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 26 Apr 2011 06:15:32 -0400

@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
+BUILT_SOURCES = dictionaries.c
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)
 AM_CFLAGS = -Wall -g
 
@@ -11,6 +12,7 @@ libradsec_radius_la_SOURCES = \
 	crypto.c \
 	custom.c \
 	dict.c \
+	client.h \
 	id.c \
 	parse.c \
 	print.c \

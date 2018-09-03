@@ -1,23 +1,24 @@
-Name: @PACKAGE@
+Name:       @PACKAGE@
 Version:	@PACKAGE_VERSION@
-Release:	2%{?dist}
+Release:	1%{?dist}
 Summary:	RADIUS over TLS library
 
 Group:		System Environment/Libraries
 License:	BSD
 URL:		http://software.uninett.no/radsecproxy/?page=documentation
 Source0:	%{name}-%{version}.tar.gz
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
-
-
 
 BuildRequires: openssl-devel
 BuildRequires: libconfuse-devel
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
-BuildRequires: libevent-devel >= 2.0
 
+%if 0%{?el6}
+BuildRequires: libevent2-devel
+%else
+BuildRequires: libevent-devel >= 2.0
+%endif
 
 
 %description

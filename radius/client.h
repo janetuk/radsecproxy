@@ -654,7 +654,7 @@ extern const int nr_dict_num_names;
  *  \attention This variable should only be accessed by internal RADIUS library
  *  functions.
  */
-extern const DICT_ATTR const *nr_dict_attr_names[];
+extern const DICT_ATTR *nr_dict_attr_names[];
 
 /** Static array containing names the RADIUS_PACKET::code field.  \ingroup dict
  *

@@ -1,6 +1,8 @@
 HACKING file for libradsec (in Emacs -*- org -*- mode).
 
-Status as of libradsec-0.0.5 (2014-02-03).
+Status as of libradsec-0.0.6 (2018-09-01).
+
+* Maintenance transferred to Jisc UK (https://www.jisc.ac.uk/)
 
 * Build instructions
 sh autogen.sh
@@ -88,4 +90,4 @@ Running the library under gdb is another good idea. If you experience
 a crash, catching the crash in gdb and providing a backtrace is highly
 valuable for debugging.
 
-Contact: mailto:linus+libradsec@nordu.net
+Contact: mailto:moonshot@jisc.ac.uk
