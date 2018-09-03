@@ -1,4 +1,4 @@
-libradsec (0.0.6-1) unstable; urgency=medium
+libradsec (0.0.6-1.DIST) unstable; urgency=medium
 
   * Update maintainer information
 
@@ -68,6 +68,6 @@ libradsec (0.0.2+20110426-2) unstable; urgency=low
 
 libradsec (0.0.2+20110426-1) unstable; urgency=low
 
-  * Initial release 
+  * Initial release
 
  -- Sam Hartman <hartmans@debian.org>  Tue, 26 Apr 2011 06:15:32 -0400
