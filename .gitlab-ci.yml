@@ -111,3 +111,26 @@ ubuntu18:
     SRC_REPO: http://archive.ubuntu.com/ubuntu/ bionic main restricted
     VERSION: 2.1.8-stable
   <<: *debian9common
+
+alpine38:
+  stage: build
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/alpine38:latest
+  tags:
+    - moonshot
+  script:
+    - sed -i "s/\(.\)%{?dist}/\1b$CI_PIPELINE_ID%{?dist}/g" libradsec.spec.in
+    - adduser -D tmpuser
+    - adduser tmpuser abuild
+    - sh autogen.sh
+    - sed -i "s/GZIP_ENV = --best//g" Makefile.in
+    - ./configure
+    - make dist
+    - sudo -u tmpuser abuild checksum
+    - sudo -u tmpuser abuild-keygen -an
+    - sudo -u tmpuser abuild -r
+    - mkdir apks
+    - cp /home/tmpuser/packages/moonshot/x86_64/*.apk apks
+  artifacts:
+    expire_in: 6 months
+    paths:
+        - apks
