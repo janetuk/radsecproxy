@@ -118,7 +118,7 @@ alpine38:
   tags:
     - moonshot
   script:
-    - sed -i "s/\(.\)%{?dist}/\1b$CI_PIPELINE_ID%{?dist}/g" libradsec.spec.in
+    - sed -i "s/pkgrel=0/pkgrel=$CI_PIPELINE_ID/g" APKBUILD.in
     - adduser -D tmpuser
     - adduser tmpuser abuild
     - sh autogen.sh
