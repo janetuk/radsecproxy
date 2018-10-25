@@ -8,7 +8,7 @@ url="http://git.nordu.net/?p=radsecproxy.git;a=shortlog;h=refs/heads/libradsec"
 arch="all"
 license="BSD-3-Clause"
 depends=""
-makedepends="alpine-sdk automake autoconf libtool openssl-dev confuse-dev libevent-dev"
+makedepends="alpine-sdk automake autoconf libtool libressl-dev confuse-dev libevent-dev"
 install=""
 subpackages="$pkgname-dev"
 source="${pkgname}-${pkgver}.tar.gz"
@@ -24,7 +24,7 @@ build() {
 		--mandir=/usr/share/man \
 		--localstatedir=/var \
 		--disable-static \
-		--enable-tls-psk
+		--enable-tls
 	make
 }
 
