@@ -112,10 +112,21 @@ debian8:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian8:latest
   <<: *debiancommon
 
+raspbian8:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian8:latest
+  <<: *debiancommon
+
 debian9:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian9:latest
   variables:
     SRC_REPO: http://deb.debian.org/debian stretch main
+    VERSION: 2.0.21-stable
+  <<: *debian9common
+
+raspbian9:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian9:latest
+  variables:
+    SRC_REPO: http://archive.raspbian.org/raspbian/ stretch main
     VERSION: 2.0.21-stable
   <<: *debian9common
 
