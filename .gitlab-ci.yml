@@ -57,7 +57,7 @@ before_script:
     - su tmpuser -c "apt-get source -y libevent"
     - cd libevent-$VERSION
     - sed -i 's/libssl-dev/libssl1.0-dev/g' debian/control
-    - dch -l moonshot "Build with OpenSSL 1.0"
+    - dch -l moonshot$CI_PIPELINE_ID "Build with OpenSSL 1.0"
     - debuild -us -uc
     - dpkg -i ../*.deb
     - cp ../*.deb ../../
