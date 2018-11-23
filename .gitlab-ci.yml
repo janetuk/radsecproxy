@@ -114,6 +114,7 @@ debian8:
 
 raspbian8:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian8:latest
+  when: manual
   <<: *debiancommon
 
 debian9:
@@ -125,6 +126,7 @@ debian9:
 
 raspbian9:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian9:latest
+  when: manual
   variables:
     SRC_REPO: http://archive.raspbian.org/raspbian/ stretch main
     VERSION: 2.0.21-stable
@@ -151,4 +153,5 @@ alpine38:
 
 alpine38_armhf:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/alpine38_arm:latest
+  when: manual
   <<: *alpinecommon
