@@ -1,8 +1,9 @@
 libradsec (0.0.7-1.DIST) unstable; urgency=medium
 
-  * TBD
+  * Include latests changes from NORDUNET
+  * Synchronised dictionary with FreeRadius
 
- -- moonshot@jisc.ac.uk <moonshot@jisc.ac.uk>  Wed, 17 Oct 2018 15:00:35 +0000
+ -- moonshot@jisc.ac.uk <moonshot@jisc.ac.uk>  Wed, 27 Nov 2018 13:00:00 +0000
 
 libradsec (0.0.6-1) unstable; urgency=medium
 
