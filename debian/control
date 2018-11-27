@@ -1,6 +1,6 @@
 Source: libradsec
 Priority: extra
-Maintainer: Sam Hartman <hartmans@debian.org>
+Maintainer: Jisc <moonshot@jisc.ac.uk>
 Build-Depends: debhelper (>= 9), autotools-dev, libconfuse-dev, libssl1.0-dev|libssl-dev (<= 1.1.0), libevent-dev (>= 2.0), dh-autoreconf
 Standards-Version: 3.9.8
 Section: libs
@@ -11,7 +11,7 @@ Package: libradsec-dev
 Section: libdevel
 Architecture: any
 Depends: libradsec0 (= ${binary:Version}), ${misc:Depends}
-Description: RADIUS library with RADSEC support 
+Description: RADIUS library with RADSEC support
  RADIUS (RFC 2865) provides a protocol for authenticating and
  authorizing users to network services.
  .

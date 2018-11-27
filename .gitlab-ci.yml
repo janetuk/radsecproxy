@@ -20,6 +20,7 @@ before_script:
     - mv libradsec*.tar.gz SOURCES
     - rpmbuild -bb libradsec.spec --define "_topdir `pwd`"
   artifacts:
+    expire_in: 6 months
     paths:
         - RPMS
 
@@ -33,11 +34,12 @@ before_script:
     - autoreconf -fi
     - ./configure
     - make dist
-    - mv libradsec-0.0.6.tar.gz ../libradsec_0.0.6.orig.tar.gz
+    - mv libradsec-0.0.7.tar.gz ../libradsec_0.0.7.orig.tar.gz
     - debuild -us -uc
     - mkdir build
     - cp ../*.deb build
   artifacts:
+    expire_in: 6 months
     paths:
         - build/*.deb
 
@@ -66,13 +68,35 @@ before_script:
     - autoreconf -fi
     - ./configure
     - make dist
-    - mv libradsec-0.0.6.tar.gz ../libradsec_0.0.6.orig.tar.gz
+    - mv libradsec-0.0.7.tar.gz ../libradsec_0.0.7.orig.tar.gz
     - debuild -us -uc
     - mkdir build
     - cp ../*.deb build
   artifacts:
+    expire_in: 6 months
     paths:
         - build/*.deb
+
+.alpinecommon: &alpinecommon
+  stage: build
+  tags:
+    - moonshot
+  script:
+    - adduser -D tmpuser -s /bin/sh
+    - adduser tmpuser abuild
+    - sh autogen.sh
+    - sed -i "s/GZIP_ENV = --best//g" Makefile.in
+    - ./configure
+    - make dist
+    - sudo -u tmpuser abuild checksum
+    - sudo -u tmpuser abuild-keygen -an
+    - sudo -u tmpuser abuild -r
+    - mkdir apks
+    - mv /home/tmpuser/packages/moonshot/* apks
+  artifacts:
+    expire_in: 6 months
+    paths:
+        - apks/*/*.apk
 
 centos6:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/centos6:latest
@@ -86,10 +110,21 @@ debian8:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian8:latest
   <<: *debiancommon
 
+raspbian8:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian8:latest
+  <<: *debiancommon
+
 debian9:
   image: registry.ci.ti.ja.net/jisc/moonshot-build/debian9:latest
   variables:
     SRC_REPO: http://deb.debian.org/debian stretch main
+    VERSION: 2.0.21-stable
+  <<: *debian9common
+
+raspbian9:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/raspbian9:latest
+  variables:
+    SRC_REPO: http://archive.raspbian.org/raspbian/ stretch main
     VERSION: 2.0.21-stable
   <<: *debian9common
 
@@ -107,3 +142,11 @@ ubuntu18:
     SRC_REPO: http://archive.ubuntu.com/ubuntu/ bionic main restricted
     VERSION: 2.1.8-stable
   <<: *debian9common
+
+alpine38:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/alpine38:latest
+  <<: *alpinecommon
+
+alpine38_armhf:
+  image: registry.ci.ti.ja.net/jisc/moonshot-build/alpine38_arm:latest
+  <<: *alpinecommon
